@@ -42,6 +42,9 @@ app.include_router(configuracion.router)
 from app.routers import busqueda
 app.include_router(busqueda.router)
 
+from app.routers import incidencias
+app.include_router(incidencias.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
