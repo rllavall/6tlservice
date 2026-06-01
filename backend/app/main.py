@@ -18,6 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.routers import ubicaciones
+app.include_router(ubicaciones.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
