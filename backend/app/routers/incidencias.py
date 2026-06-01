@@ -8,7 +8,16 @@ from sqlalchemy.orm import Session
 from app import incidencias_service as svc
 from app import models
 from app.db import get_db
-from app.schemas import IncidenciaCreate, IncidenciaOut
+from app.schemas import (
+    CambioConfiguracionOut,
+    ClienteOut,
+    ComponenteOut,
+    EquipoOut,
+    IncidenciaCreate,
+    IncidenciaFicha,
+    IncidenciaOut,
+    MovimientoOut,
+)
 
 router = APIRouter(prefix="/api/incidencias", tags=["incidencias"])
 
@@ -54,3 +63,41 @@ def crear(payload: IncidenciaCreate, db: Session = Depends(get_db)) -> models.In
     db.commit()
     db.refresh(inc)
     return inc
+
+
+@router.get("/{incidencia_id}", response_model=IncidenciaFicha)
+def ficha(incidencia_id: int, db: Session = Depends(get_db)) -> IncidenciaFicha:
+    inc = db.get(models.Incidencia, incidencia_id)
+    if inc is None:
+        raise HTTPException(404, "Incidencia no encontrada")
+
+    eq = db.get(models.Equipo, inc.equipo_id) if inc.equipo_id is not None else None
+    comp = db.get(models.Componente, inc.componente_id) if inc.componente_id is not None else None
+    cli = None
+    eq_para_cliente = eq
+    if eq_para_cliente is None and comp is not None and comp.equipo_id is not None:
+        eq_para_cliente = db.get(models.Equipo, comp.equipo_id)
+    if eq_para_cliente is not None and eq_para_cliente.cliente_id is not None:
+        cli = db.get(models.Cliente, eq_para_cliente.cliente_id)
+
+    cambios = (
+        db.query(models.CambioConfiguracion)
+        .filter(models.CambioConfiguracion.incidencia_id == incidencia_id)
+        .order_by(models.CambioConfiguracion.fecha.desc(), models.CambioConfiguracion.id.desc())
+        .all()
+    )
+    movimientos = (
+        db.query(models.Movimiento)
+        .filter(models.Movimiento.incidencia_id == incidencia_id)
+        .order_by(models.Movimiento.fecha.desc(), models.Movimiento.id.desc())
+        .all()
+    )
+
+    return IncidenciaFicha(
+        incidencia=IncidenciaOut.model_validate(inc),
+        equipo=EquipoOut.model_validate(eq) if eq is not None else None,
+        componente=ComponenteOut.model_validate(comp) if comp is not None else None,
+        cliente=ClienteOut.model_validate(cli) if cli is not None else None,
+        cambios_configuracion=[CambioConfiguracionOut.model_validate(c) for c in cambios],
+        movimientos=[MovimientoOut.model_validate(m) for m in movimientos],
+    )
