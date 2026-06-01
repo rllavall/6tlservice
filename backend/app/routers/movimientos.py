@@ -17,7 +17,8 @@ def crear_movimiento(equipo_id: int, payload: MovimientoCreate, db: Session = De
     if db.get(models.Ubicacion, payload.ubicacion_destino_id) is None:
         raise HTTPException(404, "Ubicación destino no encontrada")
     mov = trazabilidad.registrar_movimiento(
-        db, equipo_id, payload.ubicacion_destino_id, payload.fecha, payload.motivo, payload.usuario, payload.notas
+        db, equipo_id, payload.ubicacion_destino_id, payload.fecha, payload.motivo, payload.usuario, payload.notas,
+        payload.incidencia_id,
     )
     db.commit()
     db.refresh(mov)

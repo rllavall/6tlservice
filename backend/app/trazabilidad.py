@@ -30,6 +30,7 @@ def registrar_movimiento(
     motivo: str,
     usuario: Optional[str] = None,
     notas: Optional[str] = None,
+    incidencia_id: Optional[int] = None,
 ) -> models.Movimiento:
     mov = models.Movimiento(
         equipo_id=equipo_id,
@@ -38,6 +39,7 @@ def registrar_movimiento(
         motivo=motivo,
         usuario=usuario,
         notas=notas,
+        incidencia_id=incidencia_id,
     )
     db.add(mov)
     db.flush()
@@ -57,6 +59,7 @@ def montar_componente(
     motivo: str,
     usuario: Optional[str] = None,
     notas: Optional[str] = None,
+    incidencia_id: Optional[int] = None,
 ) -> models.CambioConfiguracion:
     comp = db.get(models.Componente, componente_id)
     if comp is None:
@@ -71,6 +74,7 @@ def montar_componente(
     evento = models.CambioConfiguracion(
         componente_id=componente_id, equipo_id=equipo_id, accion="montaje",
         posicion=posicion, fecha=fecha, motivo=motivo, usuario=usuario, notas=notas,
+        incidencia_id=incidencia_id,
     )
     db.add(evento)
     db.flush()
@@ -84,6 +88,7 @@ def desmontar_componente(
     motivo: str,
     usuario: Optional[str] = None,
     notas: Optional[str] = None,
+    incidencia_id: Optional[int] = None,
 ) -> models.CambioConfiguracion:
     comp = db.get(models.Componente, componente_id)
     if comp is None:
@@ -94,6 +99,7 @@ def desmontar_componente(
     evento = models.CambioConfiguracion(
         componente_id=componente_id, equipo_id=equipo_id, accion="desmontaje",
         posicion=comp.posicion, fecha=fecha, motivo=motivo, usuario=usuario, notas=notas,
+        incidencia_id=incidencia_id,
     )
     db.add(evento)
     comp.equipo_id = None
@@ -112,6 +118,7 @@ def sustituir_componente(
     motivo: str,
     usuario: Optional[str] = None,
     notas: Optional[str] = None,
+    incidencia_id: Optional[int] = None,
 ) -> dict:
     """Desmonta el saliente y monta el entrante en el mismo equipo. Atómico:
     si el montaje falla, NO se aplica el desmontaje (la sesión se revierte arriba)."""
@@ -123,6 +130,6 @@ def sustituir_componente(
     if saliente.equipo_id != equipo_id:
         raise ConfiguracionError("El componente saliente no está montado en este equipo")
     # Both operations share the session; the router commits once at the end.
-    desmontaje = desmontar_componente(db, componente_saliente_id, fecha, motivo, usuario, notas)
-    montaje = montar_componente(db, componente_entrante_id, equipo_id, posicion, fecha, motivo, usuario, notas)
+    desmontaje = desmontar_componente(db, componente_saliente_id, fecha, motivo, usuario, notas, incidencia_id)
+    montaje = montar_componente(db, componente_entrante_id, equipo_id, posicion, fecha, motivo, usuario, notas, incidencia_id)
     return {"desmontaje": desmontaje, "montaje": montaje}

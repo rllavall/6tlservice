@@ -118,6 +118,7 @@ def sustituir_componente(equipo_id: int, payload: SustituirPayload, db: Session 
         res = trazabilidad.sustituir_componente(
             db, equipo_id, payload.componente_saliente_id, payload.componente_entrante_id,
             payload.posicion, payload.fecha, payload.motivo, payload.usuario, payload.notas,
+            payload.incidencia_id,
         )
     except LookupError as e:
         db.rollback()

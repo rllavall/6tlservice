@@ -14,7 +14,8 @@ router = APIRouter(prefix="/api/componentes", tags=["configuracion"])
 def montar(componente_id: int, payload: MontarPayload, db: Session = Depends(get_db)) -> models.CambioConfiguracion:
     try:
         evento = trazabilidad.montar_componente(
-            db, componente_id, payload.equipo_id, payload.posicion, payload.fecha, payload.motivo, payload.usuario, payload.notas
+            db, componente_id, payload.equipo_id, payload.posicion, payload.fecha, payload.motivo, payload.usuario, payload.notas,
+            payload.incidencia_id,
         )
     except LookupError as e:
         db.rollback()
@@ -31,7 +32,8 @@ def montar(componente_id: int, payload: MontarPayload, db: Session = Depends(get
 def desmontar(componente_id: int, payload: DesmontarPayload, db: Session = Depends(get_db)) -> models.CambioConfiguracion:
     try:
         evento = trazabilidad.desmontar_componente(
-            db, componente_id, payload.fecha, payload.motivo, payload.usuario, payload.notas
+            db, componente_id, payload.fecha, payload.motivo, payload.usuario, payload.notas,
+            payload.incidencia_id,
         )
     except LookupError as e:
         db.rollback()

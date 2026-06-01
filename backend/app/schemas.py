@@ -133,6 +133,7 @@ class MovimientoCreate(BaseModel):
     motivo: Literal["entrega", "traslado", "reparacion", "devolucion"]
     usuario: Optional[str] = None
     notas: Optional[str] = None
+    incidencia_id: Optional[int] = None
 
 
 class MovimientoOut(_ORM):
@@ -166,6 +167,7 @@ class MontarPayload(BaseModel):
     motivo: Literal["entrega_inicial", "sustitucion", "upgrade", "reparacion", "retirada"]
     usuario: Optional[str] = None
     notas: Optional[str] = None
+    incidencia_id: Optional[int] = None
 
 
 class DesmontarPayload(BaseModel):
@@ -173,6 +175,7 @@ class DesmontarPayload(BaseModel):
     motivo: Literal["entrega_inicial", "sustitucion", "upgrade", "reparacion", "retirada"]
     usuario: Optional[str] = None
     notas: Optional[str] = None
+    incidencia_id: Optional[int] = None
 
 
 class SustituirPayload(BaseModel):
@@ -183,6 +186,7 @@ class SustituirPayload(BaseModel):
     motivo: Literal["entrega_inicial", "sustitucion", "upgrade", "reparacion", "retirada"] = "sustitucion"
     usuario: Optional[str] = None
     notas: Optional[str] = None
+    incidencia_id: Optional[int] = None
 
 
 class SustitucionOut(BaseModel):
