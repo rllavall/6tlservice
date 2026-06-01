@@ -24,6 +24,9 @@ app.include_router(ubicaciones.router)
 from app.routers import productos
 app.include_router(productos.router)
 
+from app.routers import equipos
+app.include_router(equipos.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
