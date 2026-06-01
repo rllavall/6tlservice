@@ -16,22 +16,24 @@ Es la acción estrella de postventa: que sea rápida y siempre accesible.
 
 ## Tabla de base instalada (ruta `/`)
 Carga `GET /api/equipos` → array de `Equipo`:
-`{ id, numero_serie, producto_id, cliente, fecha_fabricacion, fecha_entrega, estado, notas }`
-(`estado ∈ "operativo" | "baja"`).
+`{ id, numero_serie, producto_id, cliente_id, fecha_fabricacion, fecha_entrega, estado, notas }`
+(`estado ∈ "operativo" | "baja"`; `cliente_id` puede ser `null`).
 
-Para mostrar el modelo y la ubicación necesitas dos lookups auxiliares:
+Para mostrar el modelo, el cliente y la ubicación necesitas lookups auxiliares:
 - `GET /api/productos` → para mapear `producto_id` → `part_number` + `descripcion` (modelo del equipo).
+- `GET /api/clientes` → para mapear `cliente_id` → `nombre` (cliente/dueño del sistema). Si `cliente_id` es null, muestra "—".
 - Para la **ubicación actual** de cada equipo, NO hay campo en `/api/equipos`. Hay dos opciones; usa la (a):
   - (a) Para la columna "Ubicación" en el listado, deja que el usuario filtre por ubicación con el selector (ver filtros); la ubicación actual exacta se ve en la ficha. En el listado, muestra ubicación solo cuando filtras por una (resaltas que esos equipos están ahí). Es suficiente para v1.
   - (Nota: existe `GET /api/ubicaciones/{id}/equipos` que lista los equipos cuya ubicación actual es esa; lo usamos para el filtro por ubicación.)
 
-**Columnas:** Nº de serie (Roboto, destacado, clicable → ficha), Modelo (part_number — descripción), Cliente, Fecha entrega, Estado (badge). Fila entera clicable → `/equipos/{id}`.
+**Columnas:** Nº de serie (Roboto, destacado, clicable → ficha), Modelo (part_number — descripción), Cliente (nombre resuelto desde `cliente_id`), Fecha entrega, Estado (badge). Fila entera clicable → `/equipos/{id}`.
 
 **Badge de estado:** `operativo` = badge verde funcional discreto; `baja` = badge gris. (Recuerda: el color de marca es el lila; el verde/gris aquí es solo semáforo de estado.)
 
 **Filtros** (barra sobre la tabla):
 - **Estado:** Todos / Operativo / Baja → re-fetch con `GET /api/equipos?estado=operativo|baja`.
 - **Modelo (producto):** selector poblado desde `GET /api/productos?tipo=equipo` → `GET /api/equipos?producto_id={id}`.
+- **Cliente:** selector poblado desde `GET /api/clientes`; al elegir, filtra los equipos por `cliente_id` (en cliente, sobre la lista cargada, o re-fetch si lo prefieres).
 - **Ubicación:** selector poblado desde `GET /api/ubicaciones`; al elegir una, lista vía `GET /api/ubicaciones/{id}/equipos` (devuelve `Equipo[]`) y muestra esos.
 - **Lleva el part number (componente):** input de texto → `GET /api/equipos?part_number=<pn>` (devuelve los equipos que **contienen un componente** con ese part number — trazabilidad por despiece; útil para "¿qué equipos llevan la tarjeta X?").
 Los filtros se combinan de forma sensata; si la combinación es difícil, prioriza aplicarlos en servidor uno a uno y deja claro cuál está activo con chips removibles en lila.

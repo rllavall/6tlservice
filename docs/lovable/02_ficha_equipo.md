@@ -10,9 +10,10 @@ Implementa la **ficha de equipo** en `/equipos/:id`. Es la pantalla central de l
 `GET /api/equipos/{id}` devuelve **toda la ficha compuesta** en una sola llamada (`EquipoFicha`):
 ```
 {
-  equipo:        { id, numero_serie, producto_id, cliente, fecha_fabricacion, fecha_entrega, estado, notas },
+  equipo:        { id, numero_serie, producto_id, cliente_id, fecha_fabricacion, fecha_entrega, estado, notas },
   producto:      { id, part_number, tipo, descripcion, fabricante, modelo, notas },
-  ubicacion_actual: { id, nombre, tipo, empresa_cliente, pais, ciudad, notas } | null,
+  cliente:       { id, nombre, cif, persona_contacto, email_contacto, telefono_contacto, notas } | null,
+  ubicacion_actual: { id, nombre, tipo, cliente_id, direccion, codigo_postal, ciudad, provincia, pais, notas } | null,
   componentes:   [ { id, numero_serie, producto_id, equipo_id, posicion, fecha_montaje, notas } ],
   historial_movimientos:   [ { id, equipo_id, ubicacion_destino_id, fecha, motivo, usuario, notas } ],
   historial_configuracion: [ { id, componente_id, equipo_id, accion, posicion, fecha, motivo, usuario, notas } ]
@@ -26,7 +27,7 @@ Para mostrar el part number/descripcion de cada **componente** (la ficha solo tr
 
 **Cabecera (card destacada):**
 - Grande: `numero_serie` (Roboto, muy visible) y debajo el modelo (`producto.part_number` — `producto.descripcion`).
-- Chips/datos: **Ubicación actual** (badge lila con icono map-pin: `ubicacion_actual.nombre`), **Estado** (badge operativo/baja), **Cliente**, **Fecha de entrega**, **Fabricante**.
+- Chips/datos: **Ubicación actual** (badge lila con icono map-pin: `ubicacion_actual.nombre`), **Estado** (badge operativo/baja), **Cliente** (`cliente.nombre` desde el objeto `cliente` de la ficha; "—" si null; opcionalmente enlazable a `/clientes`), **Fecha de entrega**, **Fabricante**.
 - Acciones a la derecha: botón secundario **"Editar"** (→ `/equipos/{id}/editar`, prompt 03) y botón primario lila **"Registrar movimiento"** (abre modal, ver abajo).
 
 **Cuerpo en dos columnas (responsive a una en móvil):**

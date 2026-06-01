@@ -41,14 +41,15 @@ Crea un layout con **barra lateral de navegación** fija a la izquierda:
 - Arriba: `<Logo6TL />` + el texto "Postventa" en Open Sans.
 - Items de navegación (con icono lucide y resaltado lila cuando activo):
   1. **Base instalada** (`/`) — icono `boxes` o `server`
-  2. **Catálogo** (`/catalogo`) — icono `package`
-  3. **Ubicaciones** (`/ubicaciones`) — icono `map-pin`
+  2. **Clientes** (`/clientes`) — icono `building-2`
+  3. **Catálogo** (`/catalogo`) — icono `package`
+  4. **Ubicaciones** (`/ubicaciones`) — icono `map-pin`
 - El item activo: texto lila `#9e007e`, fondo `lila-50`, barra lila a la izquierda.
 - Contenido principal a la derecha sobre fondo `#f6f6f7`, con un header superior delgado que deja sitio para un **buscador global** (lo cablearemos en el prompt 01).
 - Pie discreto con "6TL Engineering · Postventa" en gris.
 
 Responsive: en pantallas pequeñas la barra lateral colapsa a un menú.
 
-Crea las rutas vacías (`/`, `/catalogo`, `/ubicaciones`, y `/equipos/:id`) con placeholders por ahora; las rellenamos en los siguientes prompts.
+Crea las rutas vacías (`/`, `/clientes`, `/catalogo`, `/ubicaciones`, y `/equipos/:id`) con placeholders por ahora; las rellenamos en los siguientes prompts.
 
 No inventes endpoints ni datos: deja los placeholders hasta que te pase el prompt de cada pantalla.
