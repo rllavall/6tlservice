@@ -1,7 +1,10 @@
 # Prompts Lovable — Frontend 6TL Postventa
 
-Frontend (React/Vite/TS/Tailwind/shadcn) del sub-proyecto 1 (trazabilidad + base instalada).
 Backend FastAPI en `http://127.0.0.1:8020`. Pega los prompts **en orden** en Lovable.
+
+## Sub-proyecto 1 — Trazabilidad + base instalada
+
+Frontend (React/Vite/TS/Tailwind/shadcn).
 
 | # | Prompt | Pantalla / contenido |
 |---|--------|----------------------|
@@ -14,7 +17,22 @@ Backend FastAPI en `http://127.0.0.1:8020`. Pega los prompts **en orden** en Lov
 | 06 | `06_clientes.md` | Clientes (entidad maestra: dueño de equipos y plantas) |
 | 07 | `07_update_cliente_entidad.md` | **Prompt de ACTUALIZACIÓN** para una app ya generada con el contrato viejo: introduce Cliente como entidad y reconcilia ubicaciones/equipo |
 
-> **Nota de contrato:** "Cliente" es una **entidad propia** (`/api/clientes`). Un cliente tiene N ubicaciones y N equipos. `Ubicacion.cliente_id` (solo para `tipo=fabrica_cliente`) y `Equipo.cliente_id` son FKs a Cliente. Si ya pegaste una versión anterior de los prompts (con `cliente` de texto / `empresa_cliente`), pega el **prompt 07** para ponerla al día.
+> **Nota de contrato (sub-proyecto 1):** "Cliente" es una **entidad propia** (`/api/clientes`). Un cliente tiene N ubicaciones y N equipos. `Ubicacion.cliente_id` (solo para `tipo=fabrica_cliente`) y `Equipo.cliente_id` son FKs a Cliente. Si ya pegaste una versión anterior de los prompts (con `cliente` de texto / `empresa_cliente`), pega el **prompt 07** para ponerla al día.
+
+## Sub-proyecto 2 — Incidencias / RMA
+
+Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el cliente API de 00). El contrato central es `IncidenciaOut` / `IncidenciaFicha` (ver nota abajo). Los endpoints de trazabilidad del sub-proyecto 1 aceptan ahora un campo opcional `incidencia_id` en el body (introducido por el prompt 10).
+
+| # | Prompt | Pantalla / contenido |
+|---|--------|----------------------|
+| 08 | `08_incidencias_lista.md` | Lista de incidencias (`/incidencias`): tabla con filtros de estado/prioridad y toggle "solo abiertas" |
+| 09 | `09_incidencias_ficha.md` | Ficha de incidencia / expediente (`/incidencias/$id`): timeline de fases, bloques equipo/componente/cliente, acciones de transición de estado |
+| 10 | `10_incidencias_alta.md` | Alta de incidencia (`/incidencias/nueva`) + hooks: sección "Incidencias" en ficha de equipo (02) + campo `incidencia_id` en modales de trazabilidad |
+
+> **Nota de contrato (sub-proyecto 2):**
+> - `IncidenciaOut` (campos): `id`, `codigo` (RMA-NNNN), `equipo_id`, `componente_id`, `titulo`, `descripcion_problema`, `prioridad` (`baja|media|alta|critica`), `estado` (`abierta|diagnostico|en_reparacion|resuelta|cerrada`), `asignado_a`, `en_garantia`, `diagnostico`, `resolucion`, `fecha_apertura`, `fecha_diagnostico`, `fecha_inicio_reparacion`, `fecha_resolucion`, `fecha_cierre`, `notas`.
+> - `IncidenciaFicha` (shape de `GET /api/incidencias/{id}`): `{ incidencia: IncidenciaOut, equipo, componente, cliente, cambios_configuracion[], movimientos[] }`.
+> - Los endpoints de trazabilidad aceptan `incidencia_id?` opcional: `POST /api/equipos/{id}/movimientos`, `POST /api/componentes/{id}/montar`, `POST /api/componentes/{id}/desmontar`, `POST /api/equipos/{id}/sustituir-componente`.
 
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario
