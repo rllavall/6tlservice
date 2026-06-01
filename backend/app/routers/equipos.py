@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import models, trazabilidad
 from app.db import get_db
-from app.schemas import CambioConfiguracionOut, ClienteOut, ComponenteOut, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
+from app.schemas import CambioConfiguracionOut, ClienteOut, ComponenteOut, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, IncidenciaOut, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
 
 router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 
@@ -101,6 +101,13 @@ def ficha(equipo_id: int, db: Session = Depends(get_db)) -> EquipoFicha:
 
     cli = db.get(models.Cliente, eq.cliente_id) if eq.cliente_id is not None else None
 
+    incidencias = (
+        db.query(models.Incidencia)
+        .filter(models.Incidencia.equipo_id == equipo_id)
+        .order_by(models.Incidencia.id.desc())
+        .all()
+    )
+
     return EquipoFicha(
         equipo=EquipoOut.model_validate(eq),
         producto=ProductoOut.model_validate(prod),
@@ -109,6 +116,7 @@ def ficha(equipo_id: int, db: Session = Depends(get_db)) -> EquipoFicha:
         componentes=[ComponenteOut.model_validate(c) for c in componentes],
         historial_movimientos=[MovimientoOut.model_validate(m) for m in movimientos],
         historial_configuracion=[CambioConfiguracionOut.model_validate(c) for c in cambios],
+        incidencias=[IncidenciaOut.model_validate(i) for i in incidencias],
     )
 
 

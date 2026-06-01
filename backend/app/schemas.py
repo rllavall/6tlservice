@@ -203,6 +203,7 @@ class EquipoFicha(_ORM):
     componentes: list[ComponenteOut] = []
     historial_movimientos: list[MovimientoOut] = []
     historial_configuracion: list[CambioConfiguracionOut] = []
+    incidencias: list["IncidenciaOut"] = []
 
 
 class ResultadoBusqueda(BaseModel):
@@ -278,3 +279,6 @@ class IncidenciaFicha(_ORM):
     cliente: Optional[ClienteOut] = None
     cambios_configuracion: list[CambioConfiguracionOut] = []
     movimientos: list[MovimientoOut] = []
+
+
+EquipoFicha.model_rebuild()
