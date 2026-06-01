@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import Date, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -14,6 +14,8 @@ ESTADOS_EQUIPO = ["operativo", "baja"]
 MOTIVOS_MOVIMIENTO = ["entrega", "traslado", "reparacion", "devolucion"]
 ACCIONES_CONFIG = ["montaje", "desmontaje"]
 MOTIVOS_CONFIG = ["entrega_inicial", "sustitucion", "upgrade", "reparacion", "retirada"]
+ESTADOS_INCIDENCIA = ["abierta", "diagnostico", "en_reparacion", "resuelta", "cerrada"]
+PRIORIDADES_INCIDENCIA = ["baja", "media", "alta"]
 
 
 class Cliente(Base):
@@ -98,6 +100,7 @@ class Movimiento(Base):
     motivo: Mapped[str] = mapped_column(String)
     usuario: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    incidencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("incidencias.id"), nullable=True)
 
     ubicacion_destino: Mapped["Ubicacion"] = relationship()
 
@@ -114,5 +117,29 @@ class CambioConfiguracion(Base):
     motivo: Mapped[str] = mapped_column(String)
     usuario: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    incidencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("incidencias.id"), nullable=True)
 
     componente: Mapped["Componente"] = relationship()
+
+
+class Incidencia(Base):
+    __tablename__ = "incidencias"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    codigo: Mapped[str] = mapped_column(String, unique=True)
+    equipo_id: Mapped[Optional[int]] = mapped_column(ForeignKey("equipos.id"), nullable=True)
+    componente_id: Mapped[Optional[int]] = mapped_column(ForeignKey("componentes.id"), nullable=True)
+    titulo: Mapped[str] = mapped_column(String)
+    descripcion_problema: Mapped[str] = mapped_column(String)
+    prioridad: Mapped[str] = mapped_column(String, default="media")
+    estado: Mapped[str] = mapped_column(String, default="abierta")
+    asignado_a: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    en_garantia: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    diagnostico: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    resolucion: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    fecha_apertura: Mapped[date] = mapped_column(Date)
+    fecha_diagnostico: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    fecha_inicio_reparacion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    fecha_resolucion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    fecha_cierre: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
