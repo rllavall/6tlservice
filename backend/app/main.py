@@ -30,6 +30,9 @@ app.include_router(equipos.router)
 from app.routers import componentes
 app.include_router(componentes.router)
 
+from app.routers import movimientos
+app.include_router(movimientos.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
