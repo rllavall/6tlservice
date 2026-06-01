@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import models
+from app import models, trazabilidad
 from app.db import get_db
-from app.schemas import EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, ProductoOut
+from app.schemas import EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, ProductoOut, SustituirPayload, SustitucionOut
 
 router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 
@@ -71,4 +71,24 @@ def ficha(equipo_id: int, db: Session = Depends(get_db)) -> EquipoFicha:
         componentes=[],
         historial_movimientos=[],
         historial_configuracion=[],
+    )
+
+
+@router.post("/{equipo_id}/sustituir-componente", response_model=SustitucionOut)
+def sustituir_componente(equipo_id: int, payload: SustituirPayload, db: Session = Depends(get_db)) -> SustitucionOut:
+    try:
+        res = trazabilidad.sustituir_componente(
+            db, equipo_id, payload.componente_saliente_id, payload.componente_entrante_id,
+            payload.posicion, payload.fecha, payload.motivo, payload.usuario, payload.notas,
+        )
+    except LookupError as e:
+        db.rollback()
+        raise HTTPException(404, str(e))
+    except trazabilidad.ConfiguracionError as e:
+        db.rollback()
+        raise HTTPException(409, str(e))
+    db.commit()
+    return SustitucionOut(
+        desmontaje=res["desmontaje"],
+        montaje=res["montaje"],
     )

@@ -100,3 +100,29 @@ def desmontar_componente(
     comp.posicion = None
     db.flush()
     return evento
+
+
+def sustituir_componente(
+    db: Session,
+    equipo_id: int,
+    componente_saliente_id: int,
+    componente_entrante_id: int,
+    posicion: Optional[str],
+    fecha: date,
+    motivo: str,
+    usuario: Optional[str] = None,
+    notas: Optional[str] = None,
+) -> dict:
+    """Desmonta el saliente y monta el entrante en el mismo equipo. Atómico:
+    si el montaje falla, NO se aplica el desmontaje (la sesión se revierte arriba)."""
+    if db.get(models.Equipo, equipo_id) is None:
+        raise LookupError("Equipo no encontrado")
+    saliente = db.get(models.Componente, componente_saliente_id)
+    if saliente is None:
+        raise LookupError("Componente saliente no encontrado")
+    if saliente.equipo_id != equipo_id:
+        raise ConfiguracionError("El componente saliente no está montado en este equipo")
+    # Both operations share the session; the router commits once at the end.
+    desmontaje = desmontar_componente(db, componente_saliente_id, fecha, motivo, usuario, notas)
+    montaje = montar_componente(db, componente_entrante_id, equipo_id, posicion, fecha, motivo, usuario, notas)
+    return {"desmontaje": desmontaje, "montaje": montaje}

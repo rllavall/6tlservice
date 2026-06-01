@@ -159,6 +159,11 @@ class SustituirPayload(BaseModel):
     notas: Optional[str] = None
 
 
+class SustitucionOut(BaseModel):
+    desmontaje: CambioConfiguracionOut
+    montaje: CambioConfiguracionOut
+
+
 # --- Ficha y búsqueda ---
 class EquipoFicha(_ORM):
     equipo: EquipoOut
