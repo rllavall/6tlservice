@@ -42,3 +42,61 @@ def registrar_movimiento(
     db.add(mov)
     db.flush()
     return mov
+
+
+class ConfiguracionError(Exception):
+    """Estado de montaje inválido (ya montado / no montado)."""
+
+
+def montar_componente(
+    db: Session,
+    componente_id: int,
+    equipo_id: int,
+    posicion: Optional[str],
+    fecha: date,
+    motivo: str,
+    usuario: Optional[str] = None,
+    notas: Optional[str] = None,
+) -> models.CambioConfiguracion:
+    comp = db.get(models.Componente, componente_id)
+    if comp is None:
+        raise LookupError("Componente no encontrado")
+    if db.get(models.Equipo, equipo_id) is None:
+        raise LookupError("Equipo no encontrado")
+    if comp.equipo_id is not None:
+        raise ConfiguracionError("El componente ya está montado; desmóntalo primero")
+    comp.equipo_id = equipo_id
+    comp.posicion = posicion
+    comp.fecha_montaje = fecha
+    evento = models.CambioConfiguracion(
+        componente_id=componente_id, equipo_id=equipo_id, accion="montaje",
+        posicion=posicion, fecha=fecha, motivo=motivo, usuario=usuario, notas=notas,
+    )
+    db.add(evento)
+    db.flush()
+    return evento
+
+
+def desmontar_componente(
+    db: Session,
+    componente_id: int,
+    fecha: date,
+    motivo: str,
+    usuario: Optional[str] = None,
+    notas: Optional[str] = None,
+) -> models.CambioConfiguracion:
+    comp = db.get(models.Componente, componente_id)
+    if comp is None:
+        raise LookupError("Componente no encontrado")
+    if comp.equipo_id is None:
+        raise ConfiguracionError("El componente no está montado en ningún equipo")
+    equipo_id = comp.equipo_id
+    evento = models.CambioConfiguracion(
+        componente_id=componente_id, equipo_id=equipo_id, accion="desmontaje",
+        posicion=comp.posicion, fecha=fecha, motivo=motivo, usuario=usuario, notas=notas,
+    )
+    db.add(evento)
+    comp.equipo_id = None
+    comp.posicion = None
+    db.flush()
+    return evento
