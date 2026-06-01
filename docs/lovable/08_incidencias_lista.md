@@ -24,7 +24,7 @@ Título **"Incidencias"** (Open Sans) + botón primario lila **"+ Nueva incidenc
 
 ### Filtros (barra sobre la tabla)
 - **Estado** (select): Todos / abierta / diagnostico / en_reparacion / resuelta / cerrada.
-- **Prioridad** (select): Todas / baja / media / alta / critica.
+- **Prioridad** (select): Todas / baja / media / alta.
 - **Solo abiertas** (toggle/switch): cuando está activo envía `?abiertas=true` y deshabilita el selector de estado (son mutuamente excluyentes con `estado`).
 
 Cuando cambia cualquier filtro, re-lanza `GET /api/incidencias` con los params correspondientes.
@@ -38,7 +38,7 @@ Columnas:
 | Código | `codigo` | Roboto, estilo monoespaciado, destacado (p.ej. `RMA-0001`) |
 | Equipo / Componente | `equipo_id` / `componente_id` | Muestra el `numero_serie` del equipo si tiene `equipo_id`; si solo tiene `componente_id`, muestra el número de serie del componente; si tiene ambos, muestra el equipo |
 | Título | `titulo` | Texto libre, truncado a 1 línea |
-| Prioridad | `prioridad` | Badge: `critica` → rojo `#c62828`, `alta` → ámbar `#b26a00`, `media` → azul `#1565c0`, `baja` → gris `#6b6b6e` |
+| Prioridad | `prioridad` | Badge: `alta` → ámbar `#b26a00`, `media` → azul `#1565c0`, `baja` → gris `#6b6b6e` |
 | Estado | `estado` | Badge con color: `abierta` → gris, `diagnostico` → azul `#1565c0`, `en_reparacion` → ámbar `#b26a00`, `resuelta` → verde `#2e7d32`, `cerrada` → neutro/oscuro |
 | Asignado a | `asignado_a` | Texto; "—" si null |
 | Fecha apertura | `fecha_apertura` | Formato `dd/mm/aaaa`, Roboto |
@@ -62,4 +62,4 @@ No inventes endpoints ni campos. Si el dato no viene en la lista, resuélvelo co
 > Campos exactos del objeto devuelto por `GET /api/incidencias` (lista de `IncidenciaOut`):
 > `id`, `codigo`, `equipo_id`, `componente_id`, `titulo`, `descripcion_problema`, `prioridad`, `estado`, `asignado_a`, `en_garantia`, `diagnostico`, `resolucion`, `fecha_apertura`, `fecha_diagnostico`, `fecha_inicio_reparacion`, `fecha_resolucion`, `fecha_cierre`, `notas`.
 > Valores de `estado`: `abierta` · `diagnostico` · `en_reparacion` · `resuelta` · `cerrada`.
-> Valores de `prioridad`: `baja` · `media` · `alta` · `critica`.
+> Valores de `prioridad`: `baja` · `media` · `alta`.

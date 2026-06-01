@@ -30,7 +30,7 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 | 10 | `10_incidencias_alta.md` | Alta de incidencia (`/incidencias/nueva`) + hooks: sección "Incidencias" en ficha de equipo (02) + campo `incidencia_id` en modales de trazabilidad |
 
 > **Nota de contrato (sub-proyecto 2):**
-> - `IncidenciaOut` (campos): `id`, `codigo` (RMA-NNNN), `equipo_id`, `componente_id`, `titulo`, `descripcion_problema`, `prioridad` (`baja|media|alta|critica`), `estado` (`abierta|diagnostico|en_reparacion|resuelta|cerrada`), `asignado_a`, `en_garantia`, `diagnostico`, `resolucion`, `fecha_apertura`, `fecha_diagnostico`, `fecha_inicio_reparacion`, `fecha_resolucion`, `fecha_cierre`, `notas`.
+> - `IncidenciaOut` (campos): `id`, `codigo` (RMA-NNNN), `equipo_id`, `componente_id`, `titulo`, `descripcion_problema`, `prioridad` (`baja|media|alta`), `estado` (`abierta|diagnostico|en_reparacion|resuelta|cerrada`), `asignado_a`, `en_garantia`, `diagnostico`, `resolucion`, `fecha_apertura`, `fecha_diagnostico`, `fecha_inicio_reparacion`, `fecha_resolucion`, `fecha_cierre`, `notas`.
 > - `IncidenciaFicha` (shape de `GET /api/incidencias/{id}`): `{ incidencia: IncidenciaOut, equipo, componente, cliente, cambios_configuracion[], movimientos[] }`.
 > - Los endpoints de trazabilidad aceptan `incidencia_id?` opcional: `POST /api/equipos/{id}/movimientos`, `POST /api/componentes/{id}/montar`, `POST /api/componentes/{id}/desmontar`, `POST /api/equipos/{id}/sustituir-componente`.
 

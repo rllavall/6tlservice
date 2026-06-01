@@ -21,7 +21,7 @@ Carga en paralelo antes de renderizar el formulario:
 | **Equipo / Componente** | Selector doble | Al menos uno | Selector de equipo (numero_serie + parte del part_number) Y selector de componente (numero_serie). Al menos uno de los dos debe estar relleno; pueden estarlo los dos. Si llegan query params `equipo_id` / `componente_id`, preseleccionar el correspondiente. |
 | **Título** | Texto libre | Obligatorio | Descripción breve de la avería. |
 | **Descripción del problema** | Textarea | Obligatorio | Detalle del síntoma observado. |
-| **Prioridad** | Select | Opcional (default `media`) | baja / media / alta / critica. Badge de color junto al select para visualización inmediata. |
+| **Prioridad** | Select | Opcional (default `media`) | baja / media / alta. Badge de color junto al select para visualización inmediata. |
 | **Asignado a** | Texto libre | Opcional | Nombre del técnico responsable. |
 | **En garantía** | Selector ternario | Opcional | Opciones: "Sí" (`true`) / "No" (`false`) / "—" (`null`). |
 | **Fecha de apertura** | Fecha | Obligatorio | Por defecto la fecha de hoy. |
@@ -101,7 +101,7 @@ No inventes endpoints ni campos. Usa únicamente los indicados.
 
 > **Nota de contrato**
 >
-> `POST /api/incidencias` acepta: `equipo_id?`, `componente_id?`, `titulo`, `descripcion_problema`, `prioridad?` (`baja|media|alta|critica`, default `media`), `asignado_a?`, `en_garantia?` (`true|false|null`), `fecha_apertura` (ISO date string). Devuelve `IncidenciaOut` (201) con `codigo` asignado automáticamente (`RMA-NNNN`) y `estado: "abierta"`.
+> `POST /api/incidencias` acepta: `equipo_id?`, `componente_id?`, `titulo`, `descripcion_problema`, `prioridad?` (`baja|media|alta`, default `media`), `asignado_a?`, `en_garantia?` (`true|false|null`), `fecha_apertura` (ISO date string). Devuelve `IncidenciaOut` (201) con `codigo` asignado automáticamente (`RMA-NNNN`) y `estado: "abierta"`.
 >
 > Campos exactos de `IncidenciaOut`: `id`, `codigo`, `equipo_id`, `componente_id`, `titulo`, `descripcion_problema`, `prioridad`, `estado`, `asignado_a`, `en_garantia`, `diagnostico`, `resolucion`, `fecha_apertura`, `fecha_diagnostico`, `fecha_inicio_reparacion`, `fecha_resolucion`, `fecha_cierre`, `notas`.
 >
