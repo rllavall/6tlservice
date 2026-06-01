@@ -16,7 +16,9 @@ from app.schemas import (
     IncidenciaCreate,
     IncidenciaFicha,
     IncidenciaOut,
+    IncidenciaUpdate,
     MovimientoOut,
+    TransicionPayload,
 )
 
 router = APIRouter(prefix="/api/incidencias", tags=["incidencias"])
@@ -101,3 +103,47 @@ def ficha(incidencia_id: int, db: Session = Depends(get_db)) -> IncidenciaFicha:
         cambios_configuracion=[CambioConfiguracionOut.model_validate(c) for c in cambios],
         movimientos=[MovimientoOut.model_validate(m) for m in movimientos],
     )
+
+
+@router.patch("/{incidencia_id}", response_model=IncidenciaOut)
+def actualizar(incidencia_id: int, payload: IncidenciaUpdate, db: Session = Depends(get_db)) -> models.Incidencia:
+    inc = db.get(models.Incidencia, incidencia_id)
+    if inc is None:
+        raise HTTPException(404, "Incidencia no encontrada")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(inc, k, v)
+    db.commit()
+    db.refresh(inc)
+    return inc
+
+
+@router.post("/{incidencia_id}/transicion", response_model=IncidenciaOut)
+def transicion(incidencia_id: int, payload: TransicionPayload, db: Session = Depends(get_db)) -> models.Incidencia:
+    inc = db.get(models.Incidencia, incidencia_id)
+    if inc is None:
+        raise HTTPException(404, "Incidencia no encontrada")
+    try:
+        svc.transicionar(db, inc, payload.nuevo_estado, payload.fecha)
+    except svc.IncidenciaError as e:
+        db.rollback()
+        raise HTTPException(409, str(e))
+    db.commit()
+    db.refresh(inc)
+    return inc
+
+
+@router.delete("/{incidencia_id}", status_code=204)
+def borrar(incidencia_id: int, db: Session = Depends(get_db)) -> None:
+    inc = db.get(models.Incidencia, incidencia_id)
+    if inc is None:
+        raise HTTPException(404, "Incidencia no encontrada")
+    if inc.estado != "abierta":
+        raise HTTPException(409, "Solo se pueden borrar incidencias en estado 'abierta'")
+    enlazados = (
+        db.query(models.CambioConfiguracion).filter(models.CambioConfiguracion.incidencia_id == incidencia_id).count()
+        + db.query(models.Movimiento).filter(models.Movimiento.incidencia_id == incidencia_id).count()
+    )
+    if enlazados:
+        raise HTTPException(409, "La incidencia tiene eventos de trazabilidad enlazados")
+    db.delete(inc)
+    db.commit()
