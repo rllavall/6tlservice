@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import models, trazabilidad
 from app.db import get_db
-from app.schemas import EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, ProductoOut, SustituirPayload, SustitucionOut
+from app.schemas import CambioConfiguracionOut, ComponenteOut, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
 
 router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 
@@ -63,14 +63,35 @@ def ficha(equipo_id: int, db: Session = Depends(get_db)) -> EquipoFicha:
     if eq is None:
         raise HTTPException(404, "Equipo no encontrado")
     prod = db.get(models.Producto, eq.producto_id)
-    # Minimal ficha — enriched in Task 10.
+
+    ubic = trazabilidad.ubicacion_actual(db, equipo_id)
+
+    componentes = (
+        db.query(models.Componente)
+        .filter(models.Componente.equipo_id == equipo_id)
+        .order_by(models.Componente.posicion)
+        .all()
+    )
+    movimientos = (
+        db.query(models.Movimiento)
+        .filter(models.Movimiento.equipo_id == equipo_id)
+        .order_by(models.Movimiento.fecha.desc(), models.Movimiento.id.desc())
+        .all()
+    )
+    cambios = (
+        db.query(models.CambioConfiguracion)
+        .filter(models.CambioConfiguracion.equipo_id == equipo_id)
+        .order_by(models.CambioConfiguracion.fecha.desc(), models.CambioConfiguracion.id.desc())
+        .all()
+    )
+
     return EquipoFicha(
         equipo=EquipoOut.model_validate(eq),
         producto=ProductoOut.model_validate(prod),
-        ubicacion_actual=None,
-        componentes=[],
-        historial_movimientos=[],
-        historial_configuracion=[],
+        ubicacion_actual=UbicacionOut.model_validate(ubic) if ubic is not None else None,
+        componentes=[ComponenteOut.model_validate(c) for c in componentes],
+        historial_movimientos=[MovimientoOut.model_validate(m) for m in movimientos],
+        historial_configuracion=[CambioConfiguracionOut.model_validate(c) for c in cambios],
     )
 
 
