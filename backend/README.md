@@ -23,7 +23,7 @@ actual = componentes con equipo_id apuntando al equipo.
 - CRUD: `/api/ubicaciones`, `/api/productos`, `/api/equipos`, `/api/componentes`
 - Ficha: `GET /api/equipos/{id}` (cabecera + config actual + ubicación actual + ambos historiales)
 - Búsqueda global: `GET /api/buscar?serie=...`
-- Equipos por part number: `GET /api/equipos?part_number=...`
+- Equipos por part number: `GET /api/equipos?part_number=...` — devuelve los equipos que **contienen un componente** con ese part number (trazabilidad vía despiece). NO filtra por el part number propio del equipo (para eso usa `?producto_id=`).
 - Equipos en una ubicación: `GET /api/ubicaciones/{id}/equipos`
 - Movimientos: `POST /api/equipos/{id}/movimientos`
 - Configuración: `POST /api/componentes/{id}/montar`, `/desmontar`, `POST /api/equipos/{id}/sustituir-componente`
