@@ -16,15 +16,30 @@ ACCIONES_CONFIG = ["montaje", "desmontaje"]
 MOTIVOS_CONFIG = ["entrega_inicial", "sustitucion", "upgrade", "reparacion", "retirada"]
 
 
+class Cliente(Base):
+    __tablename__ = "clientes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String)
+    cif: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    persona_contacto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    email_contacto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    telefono_contacto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
 class Ubicacion(Base):
     __tablename__ = "ubicaciones"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     nombre: Mapped[str] = mapped_column(String)
     tipo: Mapped[str] = mapped_column(String)
-    empresa_cliente: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    pais: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    cliente_id: Mapped[Optional[int]] = mapped_column(ForeignKey("clientes.id"), nullable=True)
+    direccion: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    codigo_postal: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     ciudad: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    provincia: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    pais: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
@@ -47,7 +62,7 @@ class Equipo(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     numero_serie: Mapped[str] = mapped_column(String)
     producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"))
-    cliente: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    cliente_id: Mapped[Optional[int]] = mapped_column(ForeignKey("clientes.id"), nullable=True)
     fecha_fabricacion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     fecha_entrega: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     estado: Mapped[str] = mapped_column(String, default="operativo")

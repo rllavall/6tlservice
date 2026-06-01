@@ -18,6 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.routers import clientes
+app.include_router(clientes.router)
+
 from app.routers import ubicaciones
 app.include_router(ubicaciones.router)
 

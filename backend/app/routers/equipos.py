@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import models, trazabilidad
 from app.db import get_db
-from app.schemas import CambioConfiguracionOut, ComponenteOut, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
+from app.schemas import CambioConfiguracionOut, ClienteOut, ComponenteOut, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
 
 router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 
@@ -42,6 +42,9 @@ def crear(payload: EquipoCreate, db: Session = Depends(get_db)) -> models.Equipo
         raise HTTPException(404, "Producto no encontrado")
     if prod.tipo != "equipo":
         raise HTTPException(409, "El producto referenciado no es de tipo 'equipo'")
+    if payload.cliente_id is not None:
+        if db.get(models.Cliente, payload.cliente_id) is None:
+            raise HTTPException(404, "Cliente no encontrado")
     eq = models.Equipo(**payload.model_dump())
     db.add(eq)
     try:
@@ -58,6 +61,9 @@ def actualizar(equipo_id: int, payload: EquipoUpdate, db: Session = Depends(get_
     eq = db.get(models.Equipo, equipo_id)
     if eq is None:
         raise HTTPException(404, "Equipo no encontrado")
+    if payload.cliente_id is not None:
+        if db.get(models.Cliente, payload.cliente_id) is None:
+            raise HTTPException(404, "Cliente no encontrado")
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(eq, k, v)
     db.commit()
@@ -93,9 +99,12 @@ def ficha(equipo_id: int, db: Session = Depends(get_db)) -> EquipoFicha:
         .all()
     )
 
+    cli = db.get(models.Cliente, eq.cliente_id) if eq.cliente_id is not None else None
+
     return EquipoFicha(
         equipo=EquipoOut.model_validate(eq),
         producto=ProductoOut.model_validate(prod),
+        cliente=ClienteOut.model_validate(cli) if cli is not None else None,
         ubicacion_actual=UbicacionOut.model_validate(ubic) if ubic is not None else None,
         componentes=[ComponenteOut.model_validate(c) for c in componentes],
         historial_movimientos=[MovimientoOut.model_validate(m) for m in movimientos],

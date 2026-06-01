@@ -12,7 +12,7 @@ def prod_componente(client):
 
 
 def test_equipo_create_and_get(client, prod_equipo):
-    r = client.post("/api/equipos", json={"numero_serie": "EQ-1", "producto_id": prod_equipo, "cliente": "Indra"})
+    r = client.post("/api/equipos", json={"numero_serie": "EQ-1", "producto_id": prod_equipo})
     assert r.status_code == 201, r.text
     eid = r.json()["id"]
     r = client.get(f"/api/equipos/{eid}")
@@ -41,6 +41,6 @@ def test_equipo_list_filter_by_producto(client, prod_equipo):
 
 def test_equipo_update(client, prod_equipo):
     eid = client.post("/api/equipos", json={"numero_serie": "U", "producto_id": prod_equipo}).json()["id"]
-    r = client.put(f"/api/equipos/{eid}", json={"estado": "baja", "cliente": "Otro"})
+    r = client.put(f"/api/equipos/{eid}", json={"estado": "baja"})
     assert r.status_code == 200
     assert r.json()["estado"] == "baja"

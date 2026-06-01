@@ -10,13 +10,36 @@ class _ORM(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# --- Cliente ---
+class ClienteCreate(BaseModel):
+    nombre: str
+    cif: Optional[str] = None
+    persona_contacto: Optional[str] = None
+    email_contacto: Optional[str] = None
+    telefono_contacto: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class ClienteOut(_ORM):
+    id: int
+    nombre: str
+    cif: Optional[str] = None
+    persona_contacto: Optional[str] = None
+    email_contacto: Optional[str] = None
+    telefono_contacto: Optional[str] = None
+    notas: Optional[str] = None
+
+
 # --- Ubicacion ---
 class UbicacionCreate(BaseModel):
     nombre: str
     tipo: Literal["fabrica_cliente", "sede_6tl", "en_reparacion", "en_transito"]
-    empresa_cliente: Optional[str] = None
-    pais: Optional[str] = None
+    cliente_id: Optional[int] = None
+    direccion: Optional[str] = None
+    codigo_postal: Optional[str] = None
     ciudad: Optional[str] = None
+    provincia: Optional[str] = None
+    pais: Optional[str] = None
     notas: Optional[str] = None
 
 
@@ -24,9 +47,12 @@ class UbicacionOut(_ORM):
     id: int
     nombre: str
     tipo: str
-    empresa_cliente: Optional[str] = None
-    pais: Optional[str] = None
+    cliente_id: Optional[int] = None
+    direccion: Optional[str] = None
+    codigo_postal: Optional[str] = None
     ciudad: Optional[str] = None
+    provincia: Optional[str] = None
+    pais: Optional[str] = None
     notas: Optional[str] = None
 
 
@@ -54,7 +80,7 @@ class ProductoOut(_ORM):
 class EquipoCreate(BaseModel):
     numero_serie: str
     producto_id: int
-    cliente: Optional[str] = None
+    cliente_id: Optional[int] = None
     fecha_fabricacion: Optional[date] = None
     fecha_entrega: Optional[date] = None
     estado: Literal["operativo", "baja"] = "operativo"
@@ -62,7 +88,7 @@ class EquipoCreate(BaseModel):
 
 
 class EquipoUpdate(BaseModel):
-    cliente: Optional[str] = None
+    cliente_id: Optional[int] = None
     fecha_fabricacion: Optional[date] = None
     fecha_entrega: Optional[date] = None
     estado: Optional[Literal["operativo", "baja"]] = None
@@ -73,7 +99,7 @@ class EquipoOut(_ORM):
     id: int
     numero_serie: str
     producto_id: int
-    cliente: Optional[str] = None
+    cliente_id: Optional[int] = None
     fecha_fabricacion: Optional[date] = None
     fecha_entrega: Optional[date] = None
     estado: str
@@ -168,6 +194,7 @@ class SustitucionOut(BaseModel):
 class EquipoFicha(_ORM):
     equipo: EquipoOut
     producto: ProductoOut
+    cliente: Optional[ClienteOut] = None
     ubicacion_actual: Optional[UbicacionOut] = None
     componentes: list[ComponenteOut] = []
     historial_movimientos: list[MovimientoOut] = []

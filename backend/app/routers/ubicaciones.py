@@ -25,6 +25,9 @@ def obtener(ubicacion_id: int, db: Session = Depends(get_db)) -> models.Ubicacio
 
 @router.post("", response_model=UbicacionOut, status_code=201)
 def crear(payload: UbicacionCreate, db: Session = Depends(get_db)) -> models.Ubicacion:
+    if payload.cliente_id is not None:
+        if db.get(models.Cliente, payload.cliente_id) is None:
+            raise HTTPException(404, "Cliente no encontrado")
     u = models.Ubicacion(**payload.model_dump())
     db.add(u)
     db.commit()
@@ -37,6 +40,9 @@ def actualizar(ubicacion_id: int, payload: UbicacionCreate, db: Session = Depend
     u = db.get(models.Ubicacion, ubicacion_id)
     if u is None:
         raise HTTPException(404, "Ubicación no encontrada")
+    if payload.cliente_id is not None:
+        if db.get(models.Cliente, payload.cliente_id) is None:
+            raise HTTPException(404, "Cliente no encontrado")
     for k, v in payload.model_dump().items():
         setattr(u, k, v)
     db.commit()

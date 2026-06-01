@@ -13,7 +13,7 @@ def test_create_full_graph(db_session):
     db_session.add_all([sede, prod_eq, prod_comp])
     db_session.flush()
 
-    eq = models.Equipo(numero_serie="EQ-001", producto_id=prod_eq.id, cliente="Indra", estado="operativo")
+    eq = models.Equipo(numero_serie="EQ-001", producto_id=prod_eq.id, estado="operativo")
     db_session.add(eq)
     db_session.flush()
 
