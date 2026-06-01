@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class _ORM(BaseModel):
@@ -206,3 +206,71 @@ class ResultadoBusqueda(BaseModel):
     equipo: Optional[EquipoOut] = None
     componente: Optional[ComponenteOut] = None
     equipo_del_componente: Optional[EquipoOut] = None
+
+
+# --- Incidencia ---
+_PRIORIDAD = Literal["baja", "media", "alta"]
+_ESTADO_INC = Literal["abierta", "diagnostico", "en_reparacion", "resuelta", "cerrada"]
+
+
+class IncidenciaCreate(BaseModel):
+    equipo_id: Optional[int] = None
+    componente_id: Optional[int] = None
+    titulo: str
+    descripcion_problema: str
+    prioridad: _PRIORIDAD = "media"
+    asignado_a: Optional[str] = None
+    en_garantia: Optional[bool] = None
+    fecha_apertura: date
+
+    @model_validator(mode="after")
+    def _al_menos_un_sujeto(self) -> "IncidenciaCreate":
+        if self.equipo_id is None and self.componente_id is None:
+            raise ValueError("La incidencia requiere equipo_id o componente_id (al menos uno)")
+        return self
+
+
+class IncidenciaUpdate(BaseModel):
+    titulo: Optional[str] = None
+    descripcion_problema: Optional[str] = None
+    prioridad: Optional[_PRIORIDAD] = None
+    asignado_a: Optional[str] = None
+    en_garantia: Optional[bool] = None
+    diagnostico: Optional[str] = None
+    resolucion: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class IncidenciaOut(_ORM):
+    id: int
+    codigo: str
+    equipo_id: Optional[int] = None
+    componente_id: Optional[int] = None
+    titulo: str
+    descripcion_problema: str
+    prioridad: str
+    estado: str
+    asignado_a: Optional[str] = None
+    en_garantia: Optional[bool] = None
+    diagnostico: Optional[str] = None
+    resolucion: Optional[str] = None
+    fecha_apertura: date
+    fecha_diagnostico: Optional[date] = None
+    fecha_inicio_reparacion: Optional[date] = None
+    fecha_resolucion: Optional[date] = None
+    fecha_cierre: Optional[date] = None
+    notas: Optional[str] = None
+
+
+class TransicionPayload(BaseModel):
+    nuevo_estado: _ESTADO_INC
+    fecha: Optional[date] = None
+
+
+class IncidenciaFicha(_ORM):
+    incidencia: IncidenciaOut
+    equipo: Optional[EquipoOut] = None
+    componente: Optional[ComponenteOut] = None
+    cliente: Optional[ClienteOut] = None
+    cambios_configuracion: list[CambioConfiguracionOut] = []
+    movimientos: list[MovimientoOut] = []
