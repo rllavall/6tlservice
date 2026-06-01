@@ -21,6 +21,9 @@ app.add_middleware(
 from app.routers import ubicaciones
 app.include_router(ubicaciones.router)
 
+from app.routers import productos
+app.include_router(productos.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
