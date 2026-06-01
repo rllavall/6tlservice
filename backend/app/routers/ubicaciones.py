@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
-from app import models
+from app import models, trazabilidad
 from app.db import get_db
-from app.schemas import UbicacionCreate, UbicacionOut
+from app.schemas import EquipoOut, UbicacionCreate, UbicacionOut
 
 router = APIRouter(prefix="/api/ubicaciones", tags=["ubicaciones"])
 
@@ -55,3 +55,15 @@ def borrar(ubicacion_id: int, db: Session = Depends(get_db)) -> Response:
     db.delete(u)
     db.commit()
     return Response(status_code=204)
+
+
+@router.get("/{ubicacion_id}/equipos", response_model=list[EquipoOut])
+def equipos_en_ubicacion(ubicacion_id: int, db: Session = Depends(get_db)) -> list[models.Equipo]:
+    if db.get(models.Ubicacion, ubicacion_id) is None:
+        raise HTTPException(404, "Ubicación no encontrada")
+    resultado = []
+    for eq in db.query(models.Equipo).all():
+        ubic = trazabilidad.ubicacion_actual(db, eq.id)
+        if ubic is not None and ubic.id == ubicacion_id:
+            resultado.append(eq)
+    return resultado

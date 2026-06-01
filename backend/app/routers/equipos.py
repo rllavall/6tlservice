@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 def listar(
     producto_id: Optional[int] = None,
     estado: Optional[str] = None,
+    part_number: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> list[models.Equipo]:
     q = db.query(models.Equipo)
@@ -24,6 +25,13 @@ def listar(
         q = q.filter(models.Equipo.producto_id == producto_id)
     if estado is not None:
         q = q.filter(models.Equipo.estado == estado)
+    if part_number is not None:
+        q = (
+            q.join(models.Componente, models.Componente.equipo_id == models.Equipo.id)
+            .join(models.Producto, models.Producto.id == models.Componente.producto_id)
+            .filter(models.Producto.part_number == part_number)
+            .distinct()
+        )
     return q.order_by(models.Equipo.numero_serie).all()
 
 
