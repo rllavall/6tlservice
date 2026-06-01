@@ -14,7 +14,7 @@ Implementa la pantalla **lista de incidencias** en `/incidencias`. Una incidenci
 |---|---|---|
 | `estado` | string | filtra por estado exacto |
 | `prioridad` | string | filtra por prioridad exacta |
-| `abiertas` | boolean | `true` → solo estado `abierta` (ignora `estado` si se envía) |
+| `abiertas` | boolean | `true` → excluye estado `cerrada` (devuelve abierta + diagnostico + en_reparacion + resuelta; ignora `estado` si se envía) |
 
 Para resolver el **número de serie** del equipo o componente asociado, carga en paralelo `GET /api/equipos` y `GET /api/componentes` y mapea por id.
 
