@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,7 @@ def listar(
     producto_id: Optional[int] = None,
     estado: Optional[str] = None,
     part_number: Optional[str] = None,
+    numero_serie: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> list[models.Equipo]:
     q = db.query(models.Equipo)
@@ -25,6 +27,18 @@ def listar(
         q = q.filter(models.Equipo.producto_id == producto_id)
     if estado is not None:
         q = q.filter(models.Equipo.estado == estado)
+    if numero_serie is not None:
+        # parcial e insensible a mayúsculas; coincide por la serie del equipo
+        # o por la de cualquiera de sus componentes montados.
+        patron = f"%{numero_serie}%"
+        sub = (
+            db.query(models.Componente.equipo_id)
+            .filter(models.Componente.numero_serie.ilike(patron))
+            .filter(models.Componente.equipo_id.isnot(None))
+        )
+        q = q.filter(
+            or_(models.Equipo.numero_serie.ilike(patron), models.Equipo.id.in_(sub))
+        ).distinct()
     if part_number is not None:
         q = (
             q.join(models.Componente, models.Componente.equipo_id == models.Equipo.id)
