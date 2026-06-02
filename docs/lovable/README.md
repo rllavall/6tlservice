@@ -34,6 +34,12 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 > - `IncidenciaFicha` (shape de `GET /api/incidencias/{id}`): `{ incidencia: IncidenciaOut, equipo, componente, cliente, cambios_configuracion[], movimientos[] }`.
 > - Los endpoints de trazabilidad aceptan `incidencia_id?` opcional: `POST /api/equipos/{id}/movimientos`, `POST /api/componentes/{id}/montar`, `POST /api/componentes/{id}/desmontar`, `POST /api/equipos/{id}/sustituir-componente`.
 
+## Mejoras sueltas
+
+| # | Prompt | Pantalla / contenido |
+|---|--------|----------------------|
+| 11 | `11_filtro_serie_base_instalada.md` | **Actualización** de la Base instalada (01): buscador por nº de serie en la tabla. Backend `GET /api/equipos?numero_serie=` (parcial, insensible a mayúsculas, incluye serie de componentes). |
+
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario
 - **Gris** `#3d3d3f` · **Negro** `#000000` · **Blanco** `#ffffff`
