@@ -119,6 +119,19 @@ def test_rma_en_garantia_override_manual(client):
     assert r.json()["en_garantia"] is False  # respeta el override
 
 
+def test_rma_solo_componente_deja_en_garantia_none(client):
+    # RMA contra solo un componente (sin equipo): no hay equipo del que deducir
+    # la garantia, asi que en_garantia queda None (comportamiento deliberado).
+    pc = client.post("/api/productos", json={"part_number": "PN-C", "tipo": "componente", "descripcion": "d"}).json()
+    comp = client.post("/api/componentes", json={"numero_serie": "CMP-1", "producto_id": pc["id"]}).json()
+    r = client.post("/api/incidencias", json={
+        "componente_id": comp["id"], "titulo": "Fallo comp", "descripcion_problema": "x",
+        "tipo": "rma", "fecha_apertura": "2026-06-01",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["en_garantia"] is None
+
+
 def test_filtro_por_tipo(client):
     p = client.post("/api/productos", json={"part_number": "PN-F", "tipo": "equipo", "descripcion": "d"}).json()
     eq = client.post("/api/equipos", json={"numero_serie": "SN-F", "producto_id": p["id"]}).json()
