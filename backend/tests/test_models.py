@@ -57,20 +57,17 @@ def test_part_number_unique(db_session):
         db_session.flush()
 
 
-from datetime import date as _date
-
-
 def test_equipo_props_garantia(db_session):
     from app import models
     p = models.Producto(part_number="PN1", tipo="equipo", descripcion="d", meses_garantia_default=24)
     db_session.add(p); db_session.flush()
     eq = models.Equipo(
         numero_serie="SN1", producto_id=p.id, version="Rev C",
-        fecha_entrega=_date(2024, 1, 1), meses_garantia=24,
+        fecha_entrega=date(2024, 1, 1), meses_garantia=24,
     )
     db_session.add(eq); db_session.flush()
     assert eq.version == "Rev C"
-    assert eq.fecha_fin_garantia == _date(2026, 1, 1)
+    assert eq.fecha_fin_garantia == date(2026, 1, 1)
     assert eq.estado_garantia in {"vigente", "por_vencer", "vencida"}
 
 
@@ -78,7 +75,7 @@ def test_incidencia_tipo_default(db_session):
     from app import models
     inc = models.Incidencia(
         codigo="RMA-9001", titulo="t", descripcion_problema="d",
-        estado="abierta", fecha_apertura=_date(2026, 6, 1),
+        estado="abierta", fecha_apertura=date(2026, 6, 1),
     )
     db_session.add(inc); db_session.flush()
     assert inc.tipo == "rma"
