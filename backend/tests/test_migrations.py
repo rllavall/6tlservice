@@ -56,3 +56,25 @@ def test_agrega_incidencia_id_a_tablas_legacy():
     add_missing_columns(eng)
     assert "incidencia_id" in _columnas(eng, "movimientos")
     assert "incidencia_id" in _columnas(eng, "cambios_configuracion")
+
+
+def test_agrega_columnas_garantia_y_tipo():
+    eng = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    with eng.begin() as c:
+        c.exec_driver_sql("CREATE TABLE productos (id INTEGER PRIMARY KEY, part_number TEXT)")
+        c.exec_driver_sql("CREATE TABLE equipos (id INTEGER PRIMARY KEY, numero_serie TEXT)")
+        c.exec_driver_sql("CREATE TABLE incidencias (id INTEGER PRIMARY KEY, codigo TEXT)")
+        c.exec_driver_sql("INSERT INTO incidencias (id, codigo) VALUES (1, 'RMA-0001')")
+    add_missing_columns(eng)
+    assert "meses_garantia_default" in _columnas(eng, "productos")
+    assert "meses_garantia" in _columnas(eng, "equipos")
+    assert "version" in _columnas(eng, "equipos")
+    assert "numero_serie_cliente" in _columnas(eng, "equipos")
+    assert "tipo" in _columnas(eng, "incidencias")
+    with eng.connect() as c:
+        fila = c.execute(text("SELECT tipo FROM incidencias WHERE id=1")).fetchone()
+    assert fila[0] == "rma"

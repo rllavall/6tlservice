@@ -68,6 +68,7 @@ class ProductoCreate(BaseModel):
     fabricante: Optional[str] = None
     modelo: Optional[str] = None
     notas: Optional[str] = None
+    meses_garantia_default: Optional[int] = 24
 
 
 class ProductoOut(_ORM):
@@ -78,6 +79,7 @@ class ProductoOut(_ORM):
     fabricante: Optional[str] = None
     modelo: Optional[str] = None
     notas: Optional[str] = None
+    meses_garantia_default: Optional[int] = None
 
 
 # --- Equipo ---
@@ -89,6 +91,9 @@ class EquipoCreate(BaseModel):
     fecha_entrega: Optional[date] = None
     estado: Literal["operativo", "baja"] = "operativo"
     notas: Optional[str] = None
+    meses_garantia: Optional[int] = None
+    version: Optional[str] = None
+    numero_serie_cliente: Optional[str] = None
 
 
 class EquipoUpdate(BaseModel):
@@ -97,6 +102,9 @@ class EquipoUpdate(BaseModel):
     fecha_entrega: Optional[date] = None
     estado: Optional[Literal["operativo", "baja"]] = None
     notas: Optional[str] = None
+    meses_garantia: Optional[int] = None
+    version: Optional[str] = None
+    numero_serie_cliente: Optional[str] = None
 
 
 class EquipoOut(_ORM):
@@ -108,6 +116,11 @@ class EquipoOut(_ORM):
     fecha_entrega: Optional[date] = None
     estado: str
     notas: Optional[str] = None
+    meses_garantia: Optional[int] = None
+    version: Optional[str] = None
+    numero_serie_cliente: Optional[str] = None
+    fecha_fin_garantia: Optional[date] = None
+    estado_garantia: Optional[Literal["vigente", "por_vencer", "vencida", "sin_datos"]] = None
 
 
 # --- Componente ---
@@ -231,6 +244,7 @@ class IncidenciaCreate(BaseModel):
     asignado_a: Optional[str] = None
     en_garantia: Optional[bool] = None
     fecha_apertura: date
+    tipo: Literal["rma", "soporte_venta", "soporte_tecnico", "calibracion"] = "rma"
 
     @model_validator(mode="after")
     def _al_menos_un_sujeto(self) -> "IncidenciaCreate":
@@ -248,11 +262,13 @@ class IncidenciaUpdate(BaseModel):
     diagnostico: Optional[str] = None
     resolucion: Optional[str] = None
     notas: Optional[str] = None
+    tipo: Optional[Literal["rma", "soporte_venta", "soporte_tecnico", "calibracion"]] = None
 
 
 class IncidenciaOut(_ORM):
     id: int
     codigo: str
+    tipo: str
     equipo_id: Optional[int] = None
     componente_id: Optional[int] = None
     titulo: str
@@ -283,6 +299,64 @@ class IncidenciaFicha(_ORM):
     cliente: Optional[ClienteOut] = None
     cambios_configuracion: list[CambioConfiguracionOut] = []
     movimientos: list[MovimientoOut] = []
+
+
+# --- Analítica de incidencias ---
+class ConteoItem(BaseModel):
+    clave: str
+    etiqueta: str
+    valor: int
+
+
+class KpiTiempoItem(BaseModel):
+    clave: str
+    etiqueta: str
+    dias: Optional[float] = None
+    n: int = 0
+
+
+class KpiTiempo(BaseModel):
+    mttr_dias: Optional[float] = None
+    diagnostico_dias: Optional[float] = None
+    edad_abiertas_dias: Optional[float] = None
+    por_tipo: list[KpiTiempoItem] = []
+    por_producto: list[KpiTiempoItem] = []
+    por_tecnico: list[KpiTiempoItem] = []
+
+
+class PuntoTendencia(BaseModel):
+    mes: str  # YYYY-MM
+    abiertas: int
+    cerradas: int
+    backlog: int
+
+
+class RankingItem(BaseModel):
+    id: Optional[int] = None
+    etiqueta: str
+    valor: int
+
+
+class ResumenGarantia(BaseModel):
+    equipos_por_estado: list[ConteoItem] = []
+    rma_en_garantia: int = 0
+    rma_fuera_garantia: int = 0
+    rma_garantia_desconocida: int = 0
+
+
+class AnaliticaIncidenciasOut(BaseModel):
+    total: int
+    por_tipo: list[ConteoItem] = []
+    por_producto: list[ConteoItem] = []
+    por_tecnico: list[ConteoItem] = []
+    por_prioridad: list[ConteoItem] = []
+    por_estado: list[ConteoItem] = []
+    por_cliente: list[ConteoItem] = []
+    kpis_tiempo: KpiTiempo = KpiTiempo()
+    tendencia_mensual: list[PuntoTendencia] = []
+    fiabilidad_productos: list[RankingItem] = []
+    fiabilidad_equipos: list[RankingItem] = []
+    garantia: ResumenGarantia = ResumenGarantia()
 
 
 EquipoFicha.model_rebuild()

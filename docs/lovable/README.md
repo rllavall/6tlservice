@@ -40,6 +40,12 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 |---|--------|----------------------|
 | 11 | `11_filtro_serie_base_instalada.md` | **Actualización** de la Base instalada (01): buscador por nº de serie en la tabla. Backend `GET /api/equipos?numero_serie=` (parcial, insensible a mayúsculas, incluye serie de componentes). |
 | 12 | `12_mapa_mundial.md` | **Nueva pantalla** `/mapa`: mapa mundial interactivo (Leaflet + OSM) de base instalada. Backend `GET /api/mapa/ubicaciones` (un marcador por ubicación con coords y ≥1 equipo; filtros cliente + incluir bajas). Geocodificación al guardar ubicación (Nominatim) + lat/lon manual. |
+| 13 | `13_analitica_garantia.md` | **Nueva pantalla** `/analitica`: estadísticas de incidencias (por tipo/producto/técnico/prioridad/estado/cliente), KPIs de tiempo (MTTR/diagnóstico/edad), tendencia mensual y fiabilidad. Backend `GET /api/analitica/incidencias` (filtros desde/hasta/tipo/cliente_id). Incluye **tipo de incidencia** (RMA/Soporte Venta/Soporte Técnico/Calibración) y **control de garantía**: campos `version`, `numero_serie_cliente`, `meses_garantia` en equipo + badge de estado de garantía (vigente/por_vencer/vencida/sin_datos) y RMA en/fuera de garantía. |
+
+> **Nota de contrato (analítica + garantía, prompt 13):**
+> - `IncidenciaOut`/`IncidenciaCreate`/`IncidenciaUpdate` ganan `tipo` (`rma|soporte_venta|soporte_tecnico|calibracion`, default `rma`). El listado acepta `?tipo=`. El código es `RMA-/SV-/ST-/CAL-NNNN` según el tipo. En RMA, `en_garantia` se autodetecta del equipo al crear (editable).
+> - `EquipoOut`/`EquipoCreate`/`EquipoUpdate` ganan `version`, `numero_serie_cliente`, `meses_garantia`; `EquipoOut` además expone derivados de solo lectura `fecha_fin_garantia` y `estado_garantia`. `ProductoCreate/Out` ganan `meses_garantia_default` (default 24, heredado por el equipo al alta).
+> - `GET /api/analitica/incidencias?desde=&hasta=&tipo=&cliente_id=` → `AnaliticaIncidencias` (ver el prompt 13 para el shape completo).
 
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario

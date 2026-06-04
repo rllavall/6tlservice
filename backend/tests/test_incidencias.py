@@ -76,3 +76,67 @@ def test_filtro_abiertas_excluye_solo_cerrada(client):
     assert id1 in ids, "diagnostico incidencia must appear with abiertas=true"
     assert id2 not in ids, "cerrada incidencia must NOT appear with abiertas=true"
     assert any(i["estado"] == "diagnostico" for i in items if i["id"] == id1)
+
+
+def test_incidencia_create_acepta_tipo_y_lo_devuelve(client):
+    p = client.post("/api/productos", json={"part_number": "PN-I", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-I", "producto_id": p["id"]}).json()
+    r = client.post("/api/incidencias", json={
+        "equipo_id": eq["id"], "titulo": "Cal anual", "descripcion_problema": "x",
+        "tipo": "calibracion", "fecha_apertura": "2026-06-01",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["tipo"] == "calibracion"
+
+
+def test_rma_autodetecta_en_garantia(client):
+    p = client.post("/api/productos", json={
+        "part_number": "PN-W", "tipo": "equipo", "descripcion": "d", "meses_garantia_default": 24,
+    }).json()
+    eq = client.post("/api/equipos", json={
+        "numero_serie": "SN-W", "producto_id": p["id"], "fecha_entrega": "2025-06-01",
+    }).json()
+    r = client.post("/api/incidencias", json={
+        "equipo_id": eq["id"], "titulo": "Fallo", "descripcion_problema": "x",
+        "tipo": "rma", "fecha_apertura": "2026-06-01",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["en_garantia"] is True
+    assert r.json()["codigo"].startswith("RMA-")
+
+
+def test_rma_en_garantia_override_manual(client):
+    p = client.post("/api/productos", json={
+        "part_number": "PN-W2", "tipo": "equipo", "descripcion": "d", "meses_garantia_default": 24,
+    }).json()
+    eq = client.post("/api/equipos", json={
+        "numero_serie": "SN-W2", "producto_id": p["id"], "fecha_entrega": "2025-06-01",
+    }).json()
+    r = client.post("/api/incidencias", json={
+        "equipo_id": eq["id"], "titulo": "Fallo", "descripcion_problema": "x",
+        "tipo": "rma", "en_garantia": False, "fecha_apertura": "2026-06-01",
+    })
+    assert r.json()["en_garantia"] is False  # respeta el override
+
+
+def test_rma_solo_componente_deja_en_garantia_none(client):
+    # RMA contra solo un componente (sin equipo): no hay equipo del que deducir
+    # la garantia, asi que en_garantia queda None (comportamiento deliberado).
+    pc = client.post("/api/productos", json={"part_number": "PN-C", "tipo": "componente", "descripcion": "d"}).json()
+    comp = client.post("/api/componentes", json={"numero_serie": "CMP-1", "producto_id": pc["id"]}).json()
+    r = client.post("/api/incidencias", json={
+        "componente_id": comp["id"], "titulo": "Fallo comp", "descripcion_problema": "x",
+        "tipo": "rma", "fecha_apertura": "2026-06-01",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["en_garantia"] is None
+
+
+def test_filtro_por_tipo(client):
+    p = client.post("/api/productos", json={"part_number": "PN-F", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-F", "producto_id": p["id"]}).json()
+    client.post("/api/incidencias", json={"equipo_id": eq["id"], "titulo": "a", "descripcion_problema": "x", "tipo": "rma", "fecha_apertura": "2026-06-01"})
+    client.post("/api/incidencias", json={"equipo_id": eq["id"], "titulo": "b", "descripcion_problema": "x", "tipo": "calibracion", "fecha_apertura": "2026-06-01"})
+    r = client.get("/api/incidencias?tipo=calibracion")
+    assert r.status_code == 200
+    assert [i["tipo"] for i in r.json()] == ["calibracion"]

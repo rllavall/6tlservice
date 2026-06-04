@@ -60,3 +60,21 @@ def test_reabrir_limpia_fechas_conserva_inicio(db_session):
     assert inc.fecha_resolucion is None
     assert inc.fecha_cierre is None
     assert inc.fecha_inicio_reparacion == date(2026, 6, 3)
+
+
+def test_generar_codigo_por_tipo(db_session):
+    assert svc.generar_codigo(db_session, "rma") == "RMA-0001"
+    assert svc.generar_codigo(db_session, "soporte_venta") == "SV-0001"
+    assert svc.generar_codigo(db_session, "soporte_tecnico") == "ST-0001"
+    assert svc.generar_codigo(db_session, "calibracion") == "CAL-0001"
+
+
+def test_generar_codigo_secuencia_independiente_por_prefijo(db_session):
+    _nueva(db_session, equipo_id=None, componente_id=None)  # RMA-0001
+    db_session.add(models.Incidencia(
+        codigo="SV-0001", titulo="t", descripcion_problema="d", estado="abierta",
+        tipo="soporte_venta", fecha_apertura=date(2026, 6, 1),
+    ))
+    db_session.flush()
+    assert svc.generar_codigo(db_session, "rma") == "RMA-0002"
+    assert svc.generar_codigo(db_session, "soporte_venta") == "SV-0002"

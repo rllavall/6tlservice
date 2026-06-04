@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app import garantia
 from app import incidencias_service as svc
 from app import models
 from app.db import get_db
@@ -32,6 +33,7 @@ def listar(
     componente_id: Optional[int] = None,
     asignado_a: Optional[str] = None,
     abiertas: Optional[bool] = None,
+    tipo: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> list[models.Incidencia]:
     q = db.query(models.Incidencia)
@@ -47,19 +49,27 @@ def listar(
         q = q.filter(models.Incidencia.asignado_a == asignado_a)
     if abiertas:
         q = q.filter(models.Incidencia.estado != "cerrada")
+    if tipo is not None:
+        q = q.filter(models.Incidencia.tipo == tipo)
     return q.order_by(models.Incidencia.id.desc()).all()
 
 
 @router.post("", response_model=IncidenciaOut, status_code=201)
 def crear(payload: IncidenciaCreate, db: Session = Depends(get_db)) -> models.Incidencia:
-    if payload.equipo_id is not None and db.get(models.Equipo, payload.equipo_id) is None:
-        raise HTTPException(404, "Equipo no encontrado")
+    eq = None
+    if payload.equipo_id is not None:
+        eq = db.get(models.Equipo, payload.equipo_id)
+        if eq is None:
+            raise HTTPException(404, "Equipo no encontrado")
     if payload.componente_id is not None and db.get(models.Componente, payload.componente_id) is None:
         raise HTTPException(404, "Componente no encontrado")
+    data = payload.model_dump()
+    if data["tipo"] == "rma" and data.get("en_garantia") is None and eq is not None:
+        data["en_garantia"] = garantia.equipo_en_garantia(eq, data["fecha_apertura"])
     inc = models.Incidencia(
-        codigo=svc.generar_codigo(db),
+        codigo=svc.generar_codigo(db, data["tipo"]),
         estado="abierta",
-        **payload.model_dump(),
+        **data,
     )
     db.add(inc)
     db.commit()
