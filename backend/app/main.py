@@ -56,6 +56,9 @@ app.include_router(mapa.router)
 from app.routers import analitica
 app.include_router(analitica.router)
 
+from app.routers import avances
+app.include_router(avances.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
