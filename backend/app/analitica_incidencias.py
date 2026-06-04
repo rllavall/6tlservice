@@ -12,7 +12,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app import garantia, models
+from app import models
 from app.schemas import (
     AnaliticaIncidenciasOut,
     ConteoItem,
@@ -125,13 +125,17 @@ def calcular(db: Session, hoy: date, desde: Optional[date] = None,
             items.append(KpiTiempoItem(clave=clave, etiqueta=etiqueta_fn(clave), dias=_media(valores), n=len(valores)))
         return sorted(items, key=lambda it: it.clave)
 
+    # Mapas clave->etiqueta legible para los desgloses de MTTR (mismo criterio que las distribuciones).
+    prod_etiqueta = dict(_prod_label(i) for i in incs)
+    tecnico_etiqueta = {(i.asignado_a or "sin_asignar"): (i.asignado_a or "Sin asignar") for i in incs}
+
     kpis = KpiTiempo(
         mttr_dias=mttr,
         diagnostico_dias=diag,
         edad_abiertas_dias=edad,
         por_tipo=_kpi_por(lambda i: i.tipo, lambda k: _ETIQUETA_TIPO.get(k, k)),
-        por_producto=_kpi_por(lambda i: _prod_label(i)[0], lambda k: k),
-        por_tecnico=_kpi_por(lambda i: i.asignado_a or "sin_asignar", lambda k: k),
+        por_producto=_kpi_por(lambda i: _prod_label(i)[0], lambda k: prod_etiqueta.get(k, k)),
+        por_tecnico=_kpi_por(lambda i: i.asignado_a or "sin_asignar", lambda k: tecnico_etiqueta.get(k, k)),
     )
 
     return AnaliticaIncidenciasOut(

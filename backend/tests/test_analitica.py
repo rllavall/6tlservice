@@ -59,6 +59,18 @@ def test_kpis_tiempo(db_session):
     assert out.kpis_tiempo.edad_abiertas_dias == 106.0
 
 
+def test_kpis_tiempo_desglose_usa_etiquetas_legibles(db_session):
+    _seed(db_session)
+    out = ana.calcular(db_session, hoy=date(2026, 6, 1))
+    # solo las 2 RMA estan resueltas (CAL sigue abierta) -> el desglose es por RMA
+    pt = {it.clave: it for it in out.kpis_tiempo.por_tipo}
+    assert pt["rma"].etiqueta == "RMA" and pt["rma"].dias == 7.0 and pt["rma"].n == 2
+    # producto: etiqueta legible "PN — descripcion", no el id crudo
+    assert out.kpis_tiempo.por_producto[0].etiqueta == "PN-A — Equipo A"
+    # tecnico: etiqueta legible (las resueltas son de "ana")
+    assert {it.clave: it.etiqueta for it in out.kpis_tiempo.por_tecnico} == {"ana": "ana"}
+
+
 def test_filtros_desde_hasta_y_tipo(db_session):
     _seed(db_session)
     out = ana.calcular(db_session, hoy=date(2026, 6, 1), tipo="rma")
