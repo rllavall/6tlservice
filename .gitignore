@@ -10,3 +10,6 @@ backend/_seed_demo.py
 
 # Visual brainstorm companion
 .superpowers/
+
+# Scripts throwaway (seed/backfill) — no commitear
+backend/_*.py

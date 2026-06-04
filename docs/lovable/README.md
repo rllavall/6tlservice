@@ -39,6 +39,7 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 | # | Prompt | Pantalla / contenido |
 |---|--------|----------------------|
 | 11 | `11_filtro_serie_base_instalada.md` | **Actualización** de la Base instalada (01): buscador por nº de serie en la tabla. Backend `GET /api/equipos?numero_serie=` (parcial, insensible a mayúsculas, incluye serie de componentes). |
+| 12 | `12_mapa_mundial.md` | **Nueva pantalla** `/mapa`: mapa mundial interactivo (Leaflet + OSM) de base instalada. Backend `GET /api/mapa/ubicaciones` (un marcador por ubicación con coords y ≥1 equipo; filtros cliente + incluir bajas). Geocodificación al guardar ubicación (Nominatim) + lat/lon manual. |
 
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario
