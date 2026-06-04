@@ -122,3 +122,31 @@ def test_equipo_numero_serie_cliente_opcional(client):
     r = client.post("/api/equipos", json={"numero_serie": "SN-X", "producto_id": p["id"]})
     assert r.status_code == 201, r.text
     assert r.json()["numero_serie_cliente"] is None
+
+
+def test_equipo_expone_categoria_del_producto(client):
+    p = client.post("/api/productos", json={
+        "part_number": "PN-CATEQ", "tipo": "equipo", "descripcion": "d", "categoria": "test_handler",
+    }).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-CAT", "producto_id": p["id"]}).json()
+    r = client.get(f"/api/equipos/{eq['id']}")
+    assert r.status_code == 200, r.text
+    assert r.json()["equipo"]["categoria"] == "test_handler"
+
+
+def test_equipo_categoria_none_si_producto_sin_categoria(client):
+    p = client.post("/api/productos", json={"part_number": "PN-NOCAT", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-NOCAT", "producto_id": p["id"]})
+    assert eq.json()["categoria"] is None
+
+
+def test_filtro_equipos_por_categoria(client):
+    p_ate = client.post("/api/productos", json={"part_number": "PN-A1", "tipo": "equipo", "descripcion": "d", "categoria": "ate"}).json()
+    p_fix = client.post("/api/productos", json={"part_number": "PN-F1", "tipo": "equipo", "descripcion": "d", "categoria": "test_fixture"}).json()
+    client.post("/api/equipos", json={"numero_serie": "E-ATE-1", "producto_id": p_ate["id"]})
+    client.post("/api/equipos", json={"numero_serie": "E-FIX-1", "producto_id": p_fix["id"]})
+    r = client.get("/api/equipos?categoria=ate")
+    assert r.status_code == 200
+    assert [e["numero_serie"] for e in r.json()] == ["E-ATE-1"]
+    # categoria sin equipos -> vacio
+    assert client.get("/api/equipos?categoria=test_handler").json() == []

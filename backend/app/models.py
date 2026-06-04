@@ -58,6 +58,7 @@ class Producto(Base):
     modelo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     meses_garantia_default: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=24)
+    categoria: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class Equipo(Base):
@@ -90,6 +91,10 @@ class Equipo(Base):
         from app import garantia
         return garantia.estado_garantia(self, _date.today())
 
+    @property
+    def categoria(self):
+        return self.producto.categoria if self.producto is not None else None
+
 
 class Componente(Base):
     __tablename__ = "componentes"
@@ -105,6 +110,10 @@ class Componente(Base):
 
     producto: Mapped["Producto"] = relationship()
     equipo: Mapped[Optional["Equipo"]] = relationship(back_populates="componentes")
+
+    @property
+    def categoria(self):
+        return self.producto.categoria if self.producto is not None else None
 
 
 class Movimiento(Base):

@@ -29,3 +29,12 @@ def test_componente_list_and_update(client, prod_componente):
     assert any(c["id"] == cid for c in r.json())
     r = client.put(f"/api/componentes/{cid}", json={"numero_serie": "C-2", "producto_id": prod_componente, "notas": "ok"})
     assert r.json()["notas"] == "ok"
+
+
+def test_componente_expone_categoria_del_producto(client):
+    p = client.post("/api/productos", json={
+        "part_number": "PN-YAV", "tipo": "componente", "descripcion": "Modulo YAV", "categoria": "yav_module",
+    }).json()
+    r = client.post("/api/componentes", json={"numero_serie": "YAV-1", "producto_id": p["id"]})
+    assert r.status_code == 201, r.text
+    assert r.json()["categoria"] == "yav_module"

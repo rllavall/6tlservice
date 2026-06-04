@@ -24,3 +24,25 @@ def test_producto_delete_in_use_409(client):
     client.post("/api/equipos", json={"numero_serie": "S", "producto_id": pid})
     r = client.delete(f"/api/productos/{pid}")
     assert r.status_code == 409
+
+
+def test_producto_acepta_y_devuelve_categoria(client):
+    r = client.post("/api/productos", json={
+        "part_number": "FASTATE-3000", "tipo": "equipo", "descripcion": "Sistema ATE",
+        "categoria": "ate",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["categoria"] == "ate"
+
+
+def test_producto_categoria_opcional(client):
+    r = client.post("/api/productos", json={"part_number": "PN-NC", "tipo": "equipo", "descripcion": "x"})
+    assert r.status_code == 201, r.text
+    assert r.json()["categoria"] is None
+
+
+def test_producto_categoria_invalida_422(client):
+    r = client.post("/api/productos", json={
+        "part_number": "PN-BAD", "tipo": "equipo", "descripcion": "x", "categoria": "no_existe",
+    })
+    assert r.status_code == 422

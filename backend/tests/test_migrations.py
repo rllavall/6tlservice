@@ -78,3 +78,15 @@ def test_agrega_columnas_garantia_y_tipo():
     with eng.connect() as c:
         fila = c.execute(text("SELECT tipo FROM incidencias WHERE id=1")).fetchone()
     assert fila[0] == "rma"
+
+
+def test_agrega_columna_categoria_a_productos():
+    eng = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    with eng.begin() as c:
+        c.exec_driver_sql("CREATE TABLE productos (id INTEGER PRIMARY KEY, part_number TEXT)")
+    add_missing_columns(eng)
+    assert "categoria" in _columnas(eng, "productos")
