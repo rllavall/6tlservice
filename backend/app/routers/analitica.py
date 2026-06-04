@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import analitica_incidencias as ana
 from app.db import get_db
-from app.schemas import AnaliticaIncidenciasOut
+from app.schemas import AnaliticaIncidenciasOut, ResumenServicioOut
 
 router = APIRouter(prefix="/api/analitica", tags=["analitica"])
 
@@ -22,3 +22,8 @@ def incidencias(
     db: Session = Depends(get_db),
 ) -> AnaliticaIncidenciasOut:
     return ana.calcular(db, hoy=date.today(), desde=desde, hasta=hasta, tipo=tipo, cliente_id=cliente_id)
+
+
+@router.get("/resumen", response_model=ResumenServicioOut)
+def resumen(db: Session = Depends(get_db)) -> ResumenServicioOut:
+    return ana.resumen_servicio(db, hoy=date.today())

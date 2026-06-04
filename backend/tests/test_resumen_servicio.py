@@ -49,3 +49,24 @@ def test_resumen_vacio(db_session):
     assert r.en_reparacion == 0
     assert r.cerradas_30d == 0
     assert r.tiempo_medio_cierre_dias is None
+
+
+def test_endpoint_resumen_vacio(client):
+    r = client.get("/api/analitica/resumen")
+    assert r.status_code == 200, r.text
+    b = r.json()
+    assert b["incidencias_abiertas"] == 0
+    assert b["tiempo_medio_cierre_dias"] is None
+
+
+def test_endpoint_resumen_con_datos(client):
+    p = client.post("/api/productos", json={"part_number": "PN-R", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-R", "producto_id": p["id"]}).json()
+    client.post("/api/incidencias", json={"equipo_id": eq["id"], "titulo": "a", "descripcion_problema": "x",
+        "tipo": "rma", "prioridad": "alta", "fecha_apertura": "2026-06-01"})
+    r = client.get("/api/analitica/resumen")
+    assert r.status_code == 200
+    b = r.json()
+    assert b["incidencias_abiertas"] == 1
+    assert b["incidencias_abiertas_alta"] == 1
+    assert b["rma_abierto"] == 1
