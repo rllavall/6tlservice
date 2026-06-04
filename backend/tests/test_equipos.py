@@ -73,3 +73,31 @@ def test_equipo_filter_numero_serie_por_componente(client, prod_equipo, prod_com
     assert [e["id"] for e in r.json()] == [eq["id"]]
     # un equipo no se duplica aunque coincidan equipo y/o varios componentes (distinct)
     assert len(client.get("/api/equipos?numero_serie=EQ-AAA").json()) == 1
+
+
+def test_equipo_create_hereda_meses_garantia_y_expone_garantia(client):
+    p = client.post("/api/productos", json={
+        "part_number": "PN-G", "tipo": "equipo", "descripcion": "Equipo G",
+        "meses_garantia_default": 12,
+    }).json()
+    r = client.post("/api/equipos", json={
+        "numero_serie": "SN-G", "producto_id": p["id"],
+        "fecha_entrega": "2024-01-01", "version": "Rev A",
+    })
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["version"] == "Rev A"
+    assert body["meses_garantia"] == 12           # heredado del producto
+    assert body["fecha_fin_garantia"] == "2025-01-01"
+    assert body["estado_garantia"] in {"vigente", "por_vencer", "vencida"}
+
+
+def test_equipo_create_meses_garantia_explicito_gana(client):
+    p = client.post("/api/productos", json={
+        "part_number": "PN-G2", "tipo": "equipo", "descripcion": "Equipo G2",
+        "meses_garantia_default": 12,
+    }).json()
+    r = client.post("/api/equipos", json={
+        "numero_serie": "SN-G2", "producto_id": p["id"], "meses_garantia": 36,
+    })
+    assert r.json()["meses_garantia"] == 36

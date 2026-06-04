@@ -76,3 +76,14 @@ def test_filtro_abiertas_excluye_solo_cerrada(client):
     assert id1 in ids, "diagnostico incidencia must appear with abiertas=true"
     assert id2 not in ids, "cerrada incidencia must NOT appear with abiertas=true"
     assert any(i["estado"] == "diagnostico" for i in items if i["id"] == id1)
+
+
+def test_incidencia_create_acepta_tipo_y_lo_devuelve(client):
+    p = client.post("/api/productos", json={"part_number": "PN-I", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-I", "producto_id": p["id"]}).json()
+    r = client.post("/api/incidencias", json={
+        "equipo_id": eq["id"], "titulo": "Cal anual", "descripcion_problema": "x",
+        "tipo": "calibracion", "fecha_apertura": "2026-06-01",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["tipo"] == "calibracion"

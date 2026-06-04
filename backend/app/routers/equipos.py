@@ -59,7 +59,10 @@ def crear(payload: EquipoCreate, db: Session = Depends(get_db)) -> models.Equipo
     if payload.cliente_id is not None:
         if db.get(models.Cliente, payload.cliente_id) is None:
             raise HTTPException(404, "Cliente no encontrado")
-    eq = models.Equipo(**payload.model_dump())
+    data = payload.model_dump()
+    if data.get("meses_garantia") is None and prod.meses_garantia_default is not None:
+        data["meses_garantia"] = prod.meses_garantia_default
+    eq = models.Equipo(**data)
     db.add(eq)
     try:
         db.commit()
