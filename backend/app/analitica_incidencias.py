@@ -21,6 +21,7 @@ from app.schemas import (
     PuntoTendencia,
     RankingItem,
     ResumenGarantia,
+    ResumenServicioOut,
 )
 
 _ETIQUETA_TIPO = {
@@ -223,4 +224,23 @@ def calcular(db: Session, hoy: date, desde: Optional[date] = None,
         fiabilidad_productos=fiabilidad_productos,
         fiabilidad_equipos=fiabilidad_equipos,
         garantia=resumen_garantia,
+    )
+
+
+def resumen_servicio(db: Session, hoy: date) -> ResumenServicioOut:
+    incs = db.query(models.Incidencia).all()
+    abiertas = [i for i in incs if i.estado != "cerrada"]
+    inicio_30d = hoy - timedelta(days=30)
+    cerradas_30d = [
+        i for i in incs
+        if i.fecha_cierre is not None and i.fecha_cierre >= inicio_30d
+    ]
+    tiempos = [(i.fecha_cierre - i.fecha_apertura).days for i in cerradas_30d]
+    return ResumenServicioOut(
+        incidencias_abiertas=len(abiertas),
+        incidencias_abiertas_alta=sum(1 for i in abiertas if i.prioridad == "alta"),
+        rma_abierto=sum(1 for i in abiertas if i.tipo == "rma"),
+        en_reparacion=sum(1 for i in incs if i.estado == "en_reparacion"),
+        cerradas_30d=len(cerradas_30d),
+        tiempo_medio_cierre_dias=_media(tiempos),
     )

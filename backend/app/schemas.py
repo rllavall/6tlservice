@@ -422,3 +422,12 @@ class MapaUbicacionOut(BaseModel):
     cliente: Optional[MapaClienteRef] = None
     num_equipos: int
     equipos: list[MapaEquipoOut] = []
+
+
+class ResumenServicioOut(BaseModel):
+    incidencias_abiertas: int
+    incidencias_abiertas_alta: int
+    rma_abierto: int
+    en_reparacion: int
+    cerradas_30d: int
+    tiempo_medio_cierre_dias: Optional[float] = None
