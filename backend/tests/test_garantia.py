@@ -33,7 +33,14 @@ def test_estado_vigente():
 
 def test_estado_por_vencer():
     eq = _eq(date(2024, 1, 1), 24)  # fin 2026-01-01
-    assert garantia.estado_garantia(eq, date(2025, 12, 1)) == "por_vencer"  # 31 dias
+    assert garantia.estado_garantia(eq, date(2025, 12, 1)) == "por_vencer"  # 31 días hasta fin < umbral 90
+
+
+def test_estado_en_dia_exacto_de_fin():
+    eq = _eq(date(2024, 1, 1), 24)  # fin 2026-01-01
+    # hoy == fin: el último día todavía cuenta como en garantía (por_vencer, no vencida)
+    assert garantia.estado_garantia(eq, date(2026, 1, 1)) == "por_vencer"
+    assert garantia.equipo_en_garantia(eq, date(2026, 1, 1)) is True
 
 
 def test_estado_vencida():
