@@ -47,6 +47,14 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 > - `EquipoOut`/`EquipoCreate`/`EquipoUpdate` ganan `version`, `numero_serie_cliente`, `meses_garantia`; `EquipoOut` además expone derivados de solo lectura `fecha_fin_garantia` y `estado_garantia`. `ProductoCreate/Out` ganan `meses_garantia_default` (default 24, heredado por el equipo al alta).
 > - `GET /api/analitica/incidencias?desde=&hasta=&tipo=&cliente_id=` → `AnaliticaIncidencias` (ver el prompt 13 para el shape completo).
 
+| # | Prompt | Pantalla / contenido |
+|---|--------|----------------------|
+| 14 | `14_bitacora_avances.md` | **Bitácora de avances** por incidencia. Popup desde la lista (`/incidencias`) + sección en la ficha. Backend `GET/POST/PATCH/DELETE /api/incidencias/{id}/avances` y `avances[]` en el expediente. Entrada = `fecha` + `autor` + `tipo` (avance/report/llamada/visita/diagnostico/otro) + `texto`. |
+
+> **Nota de contrato (bitácora, prompt 14):**
+> - `Avance` = `{id, incidencia_id, fecha (ISO), autor|null, tipo (avance|report|llamada|visita|diagnostico|otro), texto}`. `IncidenciaFicha` gana `avances: Avance[]`.
+> - `GET /api/incidencias/{id}/avances` (orden desc), `POST` (201, `texto` obligatorio→422 si vacío, `fecha` default hoy), `PATCH .../{avance_id}` (no enviar `null` en fecha/tipo/texto), `DELETE .../{avance_id}` (204).
+
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario
 - **Gris** `#3d3d3f` · **Negro** `#000000` · **Blanco** `#ffffff`
