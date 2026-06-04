@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class _ORM(BaseModel):
@@ -292,6 +292,33 @@ class TransicionPayload(BaseModel):
     fecha: Optional[date] = None
 
 
+# --- Avances de incidencia (bitácora) ---
+_TIPO_AVANCE = Literal["avance", "report", "llamada", "visita", "diagnostico", "otro"]
+
+
+class AvanceCreate(BaseModel):
+    fecha: Optional[date] = None   # el router pone hoy si no se envía
+    autor: Optional[str] = None
+    tipo: _TIPO_AVANCE = "avance"
+    texto: str = Field(min_length=1)
+
+
+class AvanceUpdate(BaseModel):
+    fecha: Optional[date] = None
+    autor: Optional[str] = None
+    tipo: Optional[_TIPO_AVANCE] = None
+    texto: Optional[str] = Field(default=None, min_length=1)
+
+
+class AvanceOut(_ORM):
+    id: int
+    incidencia_id: int
+    fecha: date
+    autor: Optional[str] = None
+    tipo: str
+    texto: str
+
+
 class IncidenciaFicha(_ORM):
     incidencia: IncidenciaOut
     equipo: Optional[EquipoOut] = None
@@ -299,6 +326,7 @@ class IncidenciaFicha(_ORM):
     cliente: Optional[ClienteOut] = None
     cambios_configuracion: list[CambioConfiguracionOut] = []
     movimientos: list[MovimientoOut] = []
+    avances: list[AvanceOut] = []
 
 
 # --- Analítica de incidencias ---

@@ -161,3 +161,14 @@ class Incidencia(Base):
     fecha_resolucion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     fecha_cierre: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class AvanceIncidencia(Base):
+    __tablename__ = "avances_incidencia"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    incidencia_id: Mapped[int] = mapped_column(ForeignKey("incidencias.id"))
+    fecha: Mapped[date] = mapped_column(Date)
+    autor: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tipo: Mapped[str] = mapped_column(String, default="avance")
+    texto: Mapped[str] = mapped_column(String)

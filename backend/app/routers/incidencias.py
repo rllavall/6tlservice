@@ -10,6 +10,7 @@ from app import incidencias_service as svc
 from app import models
 from app.db import get_db
 from app.schemas import (
+    AvanceOut,
     CambioConfiguracionOut,
     ClienteOut,
     ComponenteOut,
@@ -104,6 +105,12 @@ def ficha(incidencia_id: int, db: Session = Depends(get_db)) -> IncidenciaFicha:
         .order_by(models.Movimiento.fecha.desc(), models.Movimiento.id.desc())
         .all()
     )
+    avances = (
+        db.query(models.AvanceIncidencia)
+        .filter(models.AvanceIncidencia.incidencia_id == incidencia_id)
+        .order_by(models.AvanceIncidencia.fecha.desc(), models.AvanceIncidencia.id.desc())
+        .all()
+    )
 
     return IncidenciaFicha(
         incidencia=IncidenciaOut.model_validate(inc),
@@ -112,6 +119,7 @@ def ficha(incidencia_id: int, db: Session = Depends(get_db)) -> IncidenciaFicha:
         cliente=ClienteOut.model_validate(cli) if cli is not None else None,
         cambios_configuracion=[CambioConfiguracionOut.model_validate(c) for c in cambios],
         movimientos=[MovimientoOut.model_validate(m) for m in movimientos],
+        avances=[AvanceOut.model_validate(a) for a in avances],
     )
 
 
