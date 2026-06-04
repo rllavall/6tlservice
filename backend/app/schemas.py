@@ -117,7 +117,7 @@ class EquipoOut(_ORM):
     meses_garantia: Optional[int] = None
     version: Optional[str] = None
     fecha_fin_garantia: Optional[date] = None
-    estado_garantia: Optional[str] = None
+    estado_garantia: Optional[Literal["vigente", "por_vencer", "vencida", "sin_datos"]] = None
 
 
 # --- Componente ---

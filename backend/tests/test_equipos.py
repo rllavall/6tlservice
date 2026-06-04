@@ -89,7 +89,7 @@ def test_equipo_create_hereda_meses_garantia_y_expone_garantia(client):
     assert body["version"] == "Rev A"
     assert body["meses_garantia"] == 12           # heredado del producto
     assert body["fecha_fin_garantia"] == "2025-01-01"
-    assert body["estado_garantia"] in {"vigente", "por_vencer", "vencida"}
+    assert body["estado_garantia"] == "vencida"  # entrega 2024-01-01 + 12m -> fin 2025-01-01, ya vencida
 
 
 def test_equipo_create_meses_garantia_explicito_gana(client):
