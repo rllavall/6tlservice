@@ -63,6 +63,10 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 > - `categoria` (slug `ate|yav_module|fastate_module|test_fixture|test_handler|otro`, nullable) en `Producto` (catálogo). `EquipoOut` y `ComponenteOut` la exponen (derivada del producto, solo lectura).
 > - `ProductoCreate`/PUT aceptan `categoria`. `GET /api/equipos?categoria=<slug>` filtra la base instalada (combinable con `numero_serie`/`part_number`/`estado`/`producto_id`).
 
+| # | Prompt | Pantalla / contenido |
+|---|--------|----------------------|
+| 16 | `16_resumen_servicio.md` | **Cabecera "Resumen de servicio · EN VIVO"**: 4 KPIs (Incidencias abiertas · RMA abierto · En reparación · Tiempo medio de cierre 30d), elimina "SLA en riesgo". Backend `GET /api/analitica/resumen` → `ResumenServicioOut` (`incidencias_abiertas`/`_alta`, `rma_abierto`, `en_reparacion`, `cerradas_30d`, `tiempo_medio_cierre_dias`). |
+
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario
 - **Gris** `#3d3d3f` · **Negro** `#000000` · **Blanco** `#ffffff`
