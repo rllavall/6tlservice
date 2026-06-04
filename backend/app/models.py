@@ -181,3 +181,23 @@ class AvanceIncidencia(Base):
     autor: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     tipo: Mapped[str] = mapped_column(String, default="avance")
     texto: Mapped[str] = mapped_column(String)
+
+
+class SolicitudSoporte(Base):
+    __tablename__ = "solicitudes_soporte"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    codigo: Mapped[str] = mapped_column(String, unique=True)
+    estado: Mapped[str] = mapped_column(String, default="pendiente")
+    fecha_solicitud: Mapped[date] = mapped_column(Date)
+    nombre_contacto: Mapped[str] = mapped_column(String)
+    empresa: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    email_contacto: Mapped[str] = mapped_column(String)
+    telefono_contacto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    numero_serie_texto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    part_number_texto: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    titulo: Mapped[str] = mapped_column(String)
+    descripcion_problema: Mapped[str] = mapped_column(String)
+    incidencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("incidencias.id"), nullable=True)
+    motivo_rechazo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    fecha_resolucion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
