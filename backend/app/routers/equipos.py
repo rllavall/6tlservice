@@ -20,6 +20,7 @@ def listar(
     estado: Optional[str] = None,
     part_number: Optional[str] = None,
     numero_serie: Optional[str] = None,
+    categoria: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> list[models.Equipo]:
     q = db.query(models.Equipo)
@@ -46,6 +47,9 @@ def listar(
             .filter(models.Producto.part_number == part_number)
             .distinct()
         )
+    if categoria is not None:
+        sub = db.query(models.Producto.id).filter(models.Producto.categoria == categoria)
+        q = q.filter(models.Equipo.producto_id.in_(sub))
     return q.order_by(models.Equipo.numero_serie).all()
 
 
