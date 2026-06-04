@@ -61,6 +61,9 @@ class UbicacionOut(_ORM):
 
 
 # --- Producto ---
+_CATEGORIA = Literal["ate", "yav_module", "fastate_module", "test_fixture", "test_handler", "otro"]
+
+
 class ProductoCreate(BaseModel):
     part_number: str
     tipo: Literal["equipo", "componente"]
@@ -69,6 +72,7 @@ class ProductoCreate(BaseModel):
     modelo: Optional[str] = None
     notas: Optional[str] = None
     meses_garantia_default: Optional[int] = 24
+    categoria: Optional[_CATEGORIA] = None
 
 
 class ProductoOut(_ORM):
@@ -80,6 +84,7 @@ class ProductoOut(_ORM):
     modelo: Optional[str] = None
     notas: Optional[str] = None
     meses_garantia_default: Optional[int] = None
+    categoria: Optional[str] = None
 
 
 # --- Equipo ---

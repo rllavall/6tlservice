@@ -58,6 +58,7 @@ class Producto(Base):
     modelo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     meses_garantia_default: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=24)
+    categoria: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class Equipo(Base):
