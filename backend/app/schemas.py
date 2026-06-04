@@ -326,6 +326,7 @@ class IncidenciaFicha(_ORM):
     cliente: Optional[ClienteOut] = None
     cambios_configuracion: list[CambioConfiguracionOut] = []
     movimientos: list[MovimientoOut] = []
+    avances: list[AvanceOut] = []
 
 
 # --- Analítica de incidencias ---

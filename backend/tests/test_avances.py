@@ -100,3 +100,13 @@ def test_borrar_avance(client):
     assert r.status_code == 204
     assert client.get(f"/api/incidencias/{inc['id']}/avances").json() == []
     assert client.delete(f"/api/incidencias/{inc['id']}/avances/{av['id']}").status_code == 404
+
+
+def test_expediente_incluye_avances(client):
+    inc = _seed_incidencia(client)
+    client.post(f"/api/incidencias/{inc['id']}/avances", json={"texto": "uno", "fecha": "2026-06-02"})
+    client.post(f"/api/incidencias/{inc['id']}/avances", json={"texto": "dos", "fecha": "2026-06-04"})
+    r = client.get(f"/api/incidencias/{inc['id']}")
+    assert r.status_code == 200, r.text
+    avances = r.json()["avances"]
+    assert [a["texto"] for a in avances] == ["dos", "uno"]  # orden desc
