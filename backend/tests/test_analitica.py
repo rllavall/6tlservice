@@ -54,8 +54,9 @@ def test_kpis_tiempo(db_session):
     assert out.kpis_tiempo.mttr_dias == 7.0
     # diagnostico: solo RMA-0001 (3-1)=2 dias
     assert out.kpis_tiempo.diagnostico_dias == 2.0
-    # edad abiertas: CAL-0001 abierta, apertura 2026-02-01 -> hoy 2026-06-01 = 120 dias
-    assert out.kpis_tiempo.edad_abiertas_dias == 120.0
+    # edad abiertas = no cerradas: CAL-0001 (abierta, 2026-02-01 -> 120 dias) y
+    # RMA-0002 (resuelta, 2026-03-01 -> 92 dias); media (120+92)/2 = 106.0
+    assert out.kpis_tiempo.edad_abiertas_dias == 106.0
 
 
 def test_filtros_desde_hasta_y_tipo(db_session):

@@ -111,7 +111,8 @@ def calcular(db: Session, hoy: date, desde: Optional[date] = None,
 
     mttr = _media([d for i in incs if (d := _resol_dias(i)) is not None])
     diag = _media([d for i in incs if (d := _diag_dias(i)) is not None])
-    edad = _media([(hoy - i.fecha_apertura).days for i in incs if i.estado == "abierta"])
+    # "abiertas" = no cerradas (coherente con el filtro `abiertas` del listado, que excluye solo cerrada)
+    edad = _media([(hoy - i.fecha_apertura).days for i in incs if i.estado != "cerrada"])
 
     def _kpi_por(grupo_fn, etiqueta_fn) -> list[KpiTiempoItem]:
         grupos = defaultdict(list)
