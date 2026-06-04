@@ -122,3 +122,19 @@ def test_equipo_numero_serie_cliente_opcional(client):
     r = client.post("/api/equipos", json={"numero_serie": "SN-X", "producto_id": p["id"]})
     assert r.status_code == 201, r.text
     assert r.json()["numero_serie_cliente"] is None
+
+
+def test_equipo_expone_categoria_del_producto(client):
+    p = client.post("/api/productos", json={
+        "part_number": "PN-CATEQ", "tipo": "equipo", "descripcion": "d", "categoria": "test_handler",
+    }).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-CAT", "producto_id": p["id"]}).json()
+    r = client.get(f"/api/equipos/{eq['id']}")
+    assert r.status_code == 200, r.text
+    assert r.json()["equipo"]["categoria"] == "test_handler"
+
+
+def test_equipo_categoria_none_si_producto_sin_categoria(client):
+    p = client.post("/api/productos", json={"part_number": "PN-NOCAT", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-NOCAT", "producto_id": p["id"]})
+    assert eq.json()["categoria"] is None

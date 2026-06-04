@@ -126,6 +126,7 @@ class EquipoOut(_ORM):
     numero_serie_cliente: Optional[str] = None
     fecha_fin_garantia: Optional[date] = None
     estado_garantia: Optional[Literal["vigente", "por_vencer", "vencida", "sin_datos"]] = None
+    categoria: Optional[str] = None
 
 
 # --- Componente ---
@@ -146,6 +147,7 @@ class ComponenteOut(_ORM):
     posicion: Optional[str] = None
     fecha_montaje: Optional[date] = None
     notas: Optional[str] = None
+    categoria: Optional[str] = None
 
 
 # --- Movimiento ---
