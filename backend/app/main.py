@@ -53,6 +53,9 @@ app.include_router(incidencias.router)
 from app.routers import mapa
 app.include_router(mapa.router)
 
+from app.routers import analitica
+app.include_router(analitica.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
