@@ -7,3 +7,6 @@ node_modules/
 .env
 dist/
 backend/_seed_demo.py
+
+# Visual brainstorm companion
+.superpowers/

@@ -3,11 +3,22 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
-from app import models, trazabilidad
+from app import geocoding, models, trazabilidad
 from app.db import get_db
 from app.schemas import EquipoOut, UbicacionCreate, UbicacionOut
 
 router = APIRouter(prefix="/api/ubicaciones", tags=["ubicaciones"])
+
+
+def _aplicar_geocodificacion(u: models.Ubicacion) -> None:
+    """Si faltan coords pero hay datos de dirección, geocodifica (no rompe si falla)."""
+    if u.latitud is not None and u.longitud is not None:
+        return
+    coords = geocoding.geocode_ubicacion(
+        direccion=u.direccion, ciudad=u.ciudad, provincia=u.provincia, pais=u.pais
+    )
+    if coords is not None:
+        u.latitud, u.longitud = coords
 
 
 @router.get("", response_model=list[UbicacionOut])
@@ -29,6 +40,7 @@ def crear(payload: UbicacionCreate, db: Session = Depends(get_db)) -> models.Ubi
         if db.get(models.Cliente, payload.cliente_id) is None:
             raise HTTPException(404, "Cliente no encontrado")
     u = models.Ubicacion(**payload.model_dump())
+    _aplicar_geocodificacion(u)
     db.add(u)
     db.commit()
     db.refresh(u)
@@ -45,6 +57,7 @@ def actualizar(ubicacion_id: int, payload: UbicacionCreate, db: Session = Depend
             raise HTTPException(404, "Cliente no encontrado")
     for k, v in payload.model_dump().items():
         setattr(u, k, v)
+    _aplicar_geocodificacion(u)
     db.commit()
     db.refresh(u)
     return u
