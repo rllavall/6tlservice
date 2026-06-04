@@ -11,6 +11,9 @@ from sqlalchemy.engine import Engine
 # tabla -> {columna: tipo SQL}
 _COLUMNAS_NUEVAS: dict[str, dict[str, str]] = {
     "ubicaciones": {"latitud": "FLOAT", "longitud": "FLOAT"},
+    # FKs añadidos por el sub-proyecto Incidencias; BDs anteriores no los tienen.
+    "movimientos": {"incidencia_id": "INTEGER"},
+    "cambios_configuracion": {"incidencia_id": "INTEGER"},
 }
 
 
