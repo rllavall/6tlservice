@@ -7,7 +7,7 @@ fiabilidad y resumen de garantía.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -28,6 +28,13 @@ _ETIQUETA_TIPO = {
     "soporte_venta": "Soporte Venta",
     "soporte_tecnico": "Soporte Técnico",
     "calibracion": "Calibración",
+}
+
+_ETQ_GARANTIA = {
+    "vigente": "Vigente",
+    "por_vencer": "Por vencer",
+    "vencida": "Vencida",
+    "sin_datos": "Sin datos",
 }
 
 
@@ -145,8 +152,13 @@ def calcular(db: Session, hoy: date, desde: Optional[date] = None,
     aperturas = Counter(i.fecha_apertura.strftime("%Y-%m") for i in incs)
     cierres = Counter(i.fecha_cierre.strftime("%Y-%m") for i in incs if i.fecha_cierre is not None)
     meses = sorted(set(aperturas) | set(cierres))
-    tendencia = []
+    # Backlog arrastrado: incidencias abiertas ANTES del rango visible que seguian abiertas
+    # al inicio del mismo (si no, el backlog arrancaria en 0 al filtrar por `desde`).
     backlog = 0
+    if desde is not None:
+        previas = _incidencias_filtradas(db, None, desde - timedelta(days=1), tipo, cliente_id)
+        backlog = sum(1 for i in previas if i.fecha_cierre is None or i.fecha_cierre >= desde)
+    tendencia = []
     for mes in meses:
         ab = aperturas.get(mes, 0)
         ce = cierres.get(mes, 0)
@@ -176,12 +188,15 @@ def calcular(db: Session, hoy: date, desde: Optional[date] = None,
         for k, v in sorted(fiab_eq.items(), key=lambda kv: (-kv[1], str(kv[0])))[:10]
     ]
 
-    # Resumen de garantía
-    equipos = db.query(models.Equipo).all()
+    # Resumen de garantía sobre la base instalada (parque). Filtra por cliente si se indica;
+    # tipo/fechas son dimensiones de incidencia y NO aplican al estado de garantía del parque.
+    eq_query = db.query(models.Equipo)
+    if cliente_id is not None:
+        eq_query = eq_query.filter(models.Equipo.cliente_id == cliente_id)
+    equipos = eq_query.all()
     estados = Counter(garantia.estado_garantia(eq, hoy) for eq in equipos)
-    _ETQ_GAR = {"vigente": "Vigente", "por_vencer": "Por vencer", "vencida": "Vencida", "sin_datos": "Sin datos"}
     equipos_por_estado = [
-        ConteoItem(clave=k, etiqueta=_ETQ_GAR.get(k, k), valor=v)
+        ConteoItem(clave=k, etiqueta=_ETQ_GARANTIA.get(k, k), valor=v)
         for k, v in sorted(estados.items(), key=lambda kv: (-kv[1], kv[0]))
     ]
     rma = [i for i in incs if i.tipo == "rma"]

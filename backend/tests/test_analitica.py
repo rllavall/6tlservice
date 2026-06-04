@@ -112,3 +112,21 @@ def test_fiabilidad_y_garantia(db_session):
     # RMA en/fuera garantia: RMA-0001 True, RMA-0002 False
     assert out.garantia.rma_en_garantia == 1
     assert out.garantia.rma_fuera_garantia == 1
+
+
+def test_tendencia_backlog_arrastra_abiertas_previas(db_session):
+    # Con `desde`, el backlog debe arrastrar lo abierto antes del rango visible.
+    _seed(db_session)
+    out = ana.calcular(db_session, hoy=date(2026, 6, 1), desde=date(2026, 3, 1))
+    t = {p.mes: p for p in out.tendencia_mensual}
+    # CAL-0001 (abierta desde feb, nunca cerrada) arrastra 1; RMA-0002 abre en marzo -> backlog 2
+    assert t["2026-03"].backlog == 2
+
+
+def test_garantia_resumen_respeta_filtro_cliente(db_session):
+    # El parque del resumen de garantia se filtra por cliente; no debe filtrar de otros.
+    p, eq1, eq2 = _seed(db_session)
+    out = ana.calcular(db_session, hoy=date(2026, 6, 1), cliente_id=eq1.cliente_id)
+    estados = {c.clave: c.valor for c in out.garantia.equipos_por_estado}
+    assert estados.get("vigente") == 1          # eq1 (de Cli1) vigente
+    assert "vencida" not in estados             # eq2 (vencida) no es de Cli1
