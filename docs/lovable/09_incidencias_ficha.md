@@ -15,8 +15,8 @@ Implementa la **ficha de incidencia (expediente)** en `/incidencias/$id`.
   equipo:               { id, numero_serie, producto_id, cliente_id, fecha_fabricacion, fecha_entrega, estado, notas } | null,
   componente:           { id, numero_serie, producto_id, equipo_id, posicion, fecha_montaje, notas } | null,
   cliente:              { id, nombre, cif, persona_contacto, email_contacto, telefono_contacto, notas } | null,
-  cambios_configuracion: [ { id, componente_id, equipo_id, accion, posicion, fecha, motivo, usuario, notas } ],
-  movimientos:          [ { id, equipo_id, ubicacion_destino_id, fecha, motivo, usuario, notas } ]
+  cambios_configuracion: [ { id, componente_id, equipo_id, accion, posicion, fecha, motivo, usuario, notas, incidencia_id } ],
+  movimientos:          [ { id, equipo_id, ubicacion_destino_id, fecha, motivo, usuario, notas, incidencia_id } ]
 }
 ```
 
