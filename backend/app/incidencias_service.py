@@ -20,17 +20,26 @@ class IncidenciaError(Exception):
     """Transición inválida o guarda de contenido no cumplida (→ 409)."""
 
 
-def generar_codigo(db: Session) -> str:
-    """Siguiente código RMA-NNNN (max sufijo existente + 1)."""
+_PREFIJO_TIPO = {
+    "rma": "RMA",
+    "soporte_venta": "SV",
+    "soporte_tecnico": "ST",
+    "calibracion": "CAL",
+}
+
+
+def generar_codigo(db: Session, tipo: str = "rma") -> str:
+    """Siguiente código `PREFIJO-NNNN` (secuencia propia por prefijo de tipo)."""
+    prefijo = _PREFIJO_TIPO.get(tipo, "RMA")
     nums = []
     for (codigo,) in db.query(models.Incidencia.codigo).all():
-        if codigo and codigo.startswith("RMA-"):
+        if codigo and codigo.startswith(prefijo + "-"):
             try:
                 nums.append(int(codigo.split("-", 1)[1]))
             except ValueError:
                 pass
     n = (max(nums) + 1) if nums else 1
-    return f"RMA-{n:04d}"
+    return f"{prefijo}-{n:04d}"
 
 
 def transicionar(
