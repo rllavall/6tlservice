@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -42,6 +42,8 @@ class Ubicacion(Base):
     ciudad: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     provincia: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     pais: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    latitud: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitud: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 

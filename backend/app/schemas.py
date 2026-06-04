@@ -40,6 +40,8 @@ class UbicacionCreate(BaseModel):
     ciudad: Optional[str] = None
     provincia: Optional[str] = None
     pais: Optional[str] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
     notas: Optional[str] = None
 
 
@@ -53,6 +55,8 @@ class UbicacionOut(_ORM):
     ciudad: Optional[str] = None
     provincia: Optional[str] = None
     pais: Optional[str] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
     notas: Optional[str] = None
 
 
@@ -282,3 +286,30 @@ class IncidenciaFicha(_ORM):
 
 
 EquipoFicha.model_rebuild()
+
+
+# --- Mapa ---
+class MapaClienteRef(BaseModel):
+    id: int
+    nombre: str
+
+
+class MapaEquipoOut(BaseModel):
+    id: int
+    numero_serie: str
+    producto: str
+    estado: str
+
+
+class MapaUbicacionOut(BaseModel):
+    ubicacion_id: int
+    nombre: str
+    tipo: str
+    ciudad: Optional[str] = None
+    provincia: Optional[str] = None
+    pais: Optional[str] = None
+    latitud: float
+    longitud: float
+    cliente: Optional[MapaClienteRef] = None
+    num_equipos: int
+    equipos: list[MapaEquipoOut] = []

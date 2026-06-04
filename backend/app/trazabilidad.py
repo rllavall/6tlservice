@@ -22,6 +22,27 @@ def ubicacion_actual(db: Session, equipo_id: int) -> Optional[models.Ubicacion]:
     return db.get(models.Ubicacion, mov.ubicacion_destino_id)
 
 
+def equipos_por_ubicacion(
+    db: Session, incluir_baja: bool = False
+) -> list[tuple[models.Ubicacion, list[models.Equipo]]]:
+    """Agrupa los equipos por su ubicación actual (último movimiento).
+
+    Solo equipos `operativo` salvo `incluir_baja=True`. Equipos sin movimiento se omiten.
+    """
+    q = db.query(models.Equipo)
+    if not incluir_baja:
+        q = q.filter(models.Equipo.estado == "operativo")
+    grupos: dict[int, list[models.Equipo]] = {}
+    ubic: dict[int, models.Ubicacion] = {}
+    for e in q.all():
+        u = ubicacion_actual(db, e.id)
+        if u is None:
+            continue
+        grupos.setdefault(u.id, []).append(e)
+        ubic[u.id] = u
+    return [(ubic[uid], eqs) for uid, eqs in grupos.items()]
+
+
 def registrar_movimiento(
     db: Session,
     equipo_id: int,

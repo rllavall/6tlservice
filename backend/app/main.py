@@ -8,6 +8,11 @@ from app import models  # noqa: F401  (registered in Task 1)
 
 Base.metadata.create_all(engine)
 
+# Rellena columnas nuevas en tablas preexistentes (create_all no las añade).
+from app.migrations import add_missing_columns
+
+add_missing_columns(engine)
+
 app = FastAPI(title="6TL Postventa", version="0.1.0")
 
 app.add_middleware(
@@ -44,6 +49,9 @@ app.include_router(busqueda.router)
 
 from app.routers import incidencias
 app.include_router(incidencias.router)
+
+from app.routers import mapa
+app.include_router(mapa.router)
 
 
 @app.get("/api/health")
