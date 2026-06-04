@@ -93,6 +93,7 @@ class EquipoCreate(BaseModel):
     notas: Optional[str] = None
     meses_garantia: Optional[int] = None
     version: Optional[str] = None
+    numero_serie_cliente: Optional[str] = None
 
 
 class EquipoUpdate(BaseModel):
@@ -103,6 +104,7 @@ class EquipoUpdate(BaseModel):
     notas: Optional[str] = None
     meses_garantia: Optional[int] = None
     version: Optional[str] = None
+    numero_serie_cliente: Optional[str] = None
 
 
 class EquipoOut(_ORM):
@@ -116,6 +118,7 @@ class EquipoOut(_ORM):
     notas: Optional[str] = None
     meses_garantia: Optional[int] = None
     version: Optional[str] = None
+    numero_serie_cliente: Optional[str] = None
     fecha_fin_garantia: Optional[date] = None
     estado_garantia: Optional[Literal["vigente", "por_vencer", "vencida", "sin_datos"]] = None
 

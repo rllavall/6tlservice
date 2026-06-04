@@ -101,3 +101,24 @@ def test_equipo_create_meses_garantia_explicito_gana(client):
         "numero_serie": "SN-G2", "producto_id": p["id"], "meses_garantia": 36,
     })
     assert r.json()["meses_garantia"] == 36
+
+
+def test_equipo_guarda_numero_serie_cliente(client):
+    p = client.post("/api/productos", json={"part_number": "PN-NSC", "tipo": "equipo", "descripcion": "d"}).json()
+    r = client.post("/api/equipos", json={
+        "numero_serie": "SN-6TL", "producto_id": p["id"], "numero_serie_cliente": "CLI-ASSET-42",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["numero_serie_cliente"] == "CLI-ASSET-42"
+    # editable via PUT
+    eid = r.json()["id"]
+    r2 = client.put(f"/api/equipos/{eid}", json={"numero_serie_cliente": "CLI-ASSET-99"})
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["numero_serie_cliente"] == "CLI-ASSET-99"
+
+
+def test_equipo_numero_serie_cliente_opcional(client):
+    p = client.post("/api/productos", json={"part_number": "PN-NSC2", "tipo": "equipo", "descripcion": "d"}).json()
+    r = client.post("/api/equipos", json={"numero_serie": "SN-X", "producto_id": p["id"]})
+    assert r.status_code == 201, r.text
+    assert r.json()["numero_serie_cliente"] is None

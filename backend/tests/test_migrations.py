@@ -73,6 +73,7 @@ def test_agrega_columnas_garantia_y_tipo():
     assert "meses_garantia_default" in _columnas(eng, "productos")
     assert "meses_garantia" in _columnas(eng, "equipos")
     assert "version" in _columnas(eng, "equipos")
+    assert "numero_serie_cliente" in _columnas(eng, "equipos")
     assert "tipo" in _columnas(eng, "incidencias")
     with eng.connect() as c:
         fila = c.execute(text("SELECT tipo FROM incidencias WHERE id=1")).fetchone()

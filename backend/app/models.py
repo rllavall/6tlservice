@@ -74,6 +74,7 @@ class Equipo(Base):
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     meses_garantia: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     version: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    numero_serie_cliente: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     producto: Mapped["Producto"] = relationship()
     componentes: Mapped[list["Componente"]] = relationship(back_populates="equipo")

@@ -16,7 +16,7 @@ _COLUMNAS_NUEVAS: dict[str, dict[str, str]] = {
     "cambios_configuracion": {"incidencia_id": "INTEGER"},
     # Garantía + tipo de incidencia (sub-proyecto analítica).
     "productos": {"meses_garantia_default": "INTEGER DEFAULT 24"},
-    "equipos": {"meses_garantia": "INTEGER", "version": "TEXT"},
+    "equipos": {"meses_garantia": "INTEGER", "version": "TEXT", "numero_serie_cliente": "TEXT"},
     "incidencias": {"tipo": "TEXT NOT NULL DEFAULT 'rma'"},
 }
 
