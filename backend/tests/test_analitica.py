@@ -83,3 +83,32 @@ def test_vacio_no_rompe(db_session):
     out = ana.calcular(db_session, hoy=date(2026, 6, 1))
     assert out.total == 0
     assert out.kpis_tiempo.mttr_dias is None
+
+
+def test_tendencia_mensual(db_session):
+    _seed(db_session)
+    out = ana.calcular(db_session, hoy=date(2026, 6, 1))
+    t = {p.mes: p for p in out.tendencia_mensual}
+    # aperturas: ene, feb, mar 2026 (1 cada uno); cierre: ene 2026 (RMA-0001)
+    assert t["2026-01"].abiertas == 1 and t["2026-01"].cerradas == 1
+    assert t["2026-02"].abiertas == 1 and t["2026-02"].cerradas == 0
+    # backlog acumulado: ene 1-1=0, feb 0+1=1, mar 1+1=2
+    assert t["2026-01"].backlog == 0
+    assert t["2026-02"].backlog == 1
+    assert t["2026-03"].backlog == 2
+
+
+def test_fiabilidad_y_garantia(db_session):
+    _seed(db_session)
+    out = ana.calcular(db_session, hoy=date(2026, 6, 1))
+    # fiabilidad: el unico producto acumula 3 incidencias
+    assert out.fiabilidad_productos[0].valor == 3
+    # equipo eq2 tiene 2 incidencias, eq1 tiene 1 -> eq2 primero
+    assert out.fiabilidad_equipos[0].valor == 2
+    # garantia equipos: eq1 entrega 2025 fin 2027 -> vigente; eq2 entrega 2020 -> vencida
+    estados = {c.clave: c.valor for c in out.garantia.equipos_por_estado}
+    assert estados.get("vigente") == 1
+    assert estados.get("vencida") == 1
+    # RMA en/fuera garantia: RMA-0001 True, RMA-0002 False
+    assert out.garantia.rma_en_garantia == 1
+    assert out.garantia.rma_fuera_garantia == 1

@@ -12,12 +12,15 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app import models
+from app import garantia, models
 from app.schemas import (
     AnaliticaIncidenciasOut,
     ConteoItem,
     KpiTiempo,
     KpiTiempoItem,
+    PuntoTendencia,
+    RankingItem,
+    ResumenGarantia,
 )
 
 _ETIQUETA_TIPO = {
@@ -138,6 +141,60 @@ def calcular(db: Session, hoy: date, desde: Optional[date] = None,
         por_tecnico=_kpi_por(lambda i: i.asignado_a or "sin_asignar", lambda k: tecnico_etiqueta.get(k, k)),
     )
 
+    # Tendencia mensual
+    aperturas = Counter(i.fecha_apertura.strftime("%Y-%m") for i in incs)
+    cierres = Counter(i.fecha_cierre.strftime("%Y-%m") for i in incs if i.fecha_cierre is not None)
+    meses = sorted(set(aperturas) | set(cierres))
+    tendencia = []
+    backlog = 0
+    for mes in meses:
+        ab = aperturas.get(mes, 0)
+        ce = cierres.get(mes, 0)
+        backlog += ab - ce
+        tendencia.append(PuntoTendencia(mes=mes, abiertas=ab, cerradas=ce, backlog=backlog))
+
+    # Fiabilidad (rankings)
+    fiab_prod = Counter()
+    etiqueta_prod = {}
+    fiab_eq = Counter()
+    etiqueta_eq = {}
+    for i in incs:
+        clave, etq = _prod_label(i)
+        fiab_prod[clave] += 1
+        etiqueta_prod[clave] = etq
+        if i.equipo_id is not None:
+            fiab_eq[i.equipo_id] += 1
+    for eid in list(fiab_eq):
+        eq = db.get(models.Equipo, eid)
+        etiqueta_eq[eid] = eq.numero_serie if eq is not None else f"Equipo {eid}"
+    fiabilidad_productos = [
+        RankingItem(id=None, etiqueta=etiqueta_prod[k], valor=v)
+        for k, v in sorted(fiab_prod.items(), key=lambda kv: (-kv[1], kv[0]))[:10]
+    ]
+    fiabilidad_equipos = [
+        RankingItem(id=k, etiqueta=etiqueta_eq[k], valor=v)
+        for k, v in sorted(fiab_eq.items(), key=lambda kv: (-kv[1], str(kv[0])))[:10]
+    ]
+
+    # Resumen de garantía
+    equipos = db.query(models.Equipo).all()
+    estados = Counter(garantia.estado_garantia(eq, hoy) for eq in equipos)
+    _ETQ_GAR = {"vigente": "Vigente", "por_vencer": "Por vencer", "vencida": "Vencida", "sin_datos": "Sin datos"}
+    equipos_por_estado = [
+        ConteoItem(clave=k, etiqueta=_ETQ_GAR.get(k, k), valor=v)
+        for k, v in sorted(estados.items(), key=lambda kv: (-kv[1], kv[0]))
+    ]
+    rma = [i for i in incs if i.tipo == "rma"]
+    rma_en = sum(1 for i in rma if i.en_garantia is True)
+    rma_fuera = sum(1 for i in rma if i.en_garantia is False)
+    rma_desc = sum(1 for i in rma if i.en_garantia is None)
+    resumen_garantia = ResumenGarantia(
+        equipos_por_estado=equipos_por_estado,
+        rma_en_garantia=rma_en,
+        rma_fuera_garantia=rma_fuera,
+        rma_garantia_desconocida=rma_desc,
+    )
+
     return AnaliticaIncidenciasOut(
         total=len(incs),
         por_tipo=por_tipo,
@@ -147,4 +204,8 @@ def calcular(db: Session, hoy: date, desde: Optional[date] = None,
         por_estado=por_estado,
         por_cliente=por_cliente,
         kpis_tiempo=kpis,
+        tendencia_mensual=tendencia,
+        fiabilidad_productos=fiabilidad_productos,
+        fiabilidad_equipos=fiabilidad_equipos,
+        garantia=resumen_garantia,
     )
