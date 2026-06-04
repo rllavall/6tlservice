@@ -45,3 +45,20 @@ def test_geocode_ubicacion_combina_partes_no_vacias():
 
 def test_geocode_ubicacion_sin_datos_devuelve_none():
     assert geocoding.geocode_ubicacion(fetch=lambda url: 1 / 0) is None
+
+
+def test_geocode_ubicacion_cae_a_ciudad_si_direccion_no_resuelve():
+    # La dirección específica (polígono) no resuelve; debe reintentar con ciudad+país.
+    def fake_fetch(url):
+        if "Chac" in url:  # query con la dirección detallada
+            return []
+        return [{"lat": "40.03", "lon": "-3.60"}]
+
+    res = geocoding.geocode_ubicacion(
+        direccion="Pol. Ind. Gonzalo Chacón",
+        ciudad="Aranjuez",
+        provincia="Madrid",
+        pais="España",
+        fetch=fake_fetch,
+    )
+    assert res == (40.03, -3.60)

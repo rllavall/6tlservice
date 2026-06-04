@@ -48,8 +48,23 @@ def geocode_ubicacion(
     *,
     fetch: Fetch = _http_fetch,
 ) -> Optional[tuple[float, float]]:
-    """Geocodifica combinando las partes de dirección no vacías."""
-    partes = [p for p in (direccion, ciudad, provincia, pais) if p]
-    if not partes:
-        return None
-    return geocode(", ".join(partes), fetch=fetch)
+    """Geocodifica probando de la más específica a la más genérica.
+
+    Si la dirección completa no resuelve (p. ej. un polígono que Nominatim no conoce),
+    reintenta con ciudad+provincia+país y luego ciudad+país.
+    """
+    candidatos = [
+        [direccion, ciudad, provincia, pais],
+        [ciudad, provincia, pais],
+        [ciudad, pais],
+    ]
+    vistos: set[str] = set()
+    for partes in candidatos:
+        query = ", ".join(p for p in partes if p)
+        if not query or query in vistos:
+            continue
+        vistos.add(query)
+        coords = geocode(query, fetch=fetch)
+        if coords is not None:
+            return coords
+    return None
