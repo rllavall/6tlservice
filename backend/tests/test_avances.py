@@ -82,6 +82,17 @@ def test_editar_avance_de_otra_incidencia_404(client):
     assert r.status_code == 404
 
 
+def test_editar_avance_null_en_campo_no_nullable_422(client):
+    inc = _seed_incidencia(client)
+    av = client.post(f"/api/incidencias/{inc['id']}/avances", json={"texto": "x", "autor": "ana"}).json()
+    # null explícito en un campo no-nullable -> 422 limpio (no 500 de la BD)
+    assert client.patch(f"/api/incidencias/{inc['id']}/avances/{av['id']}", json={"fecha": None}).status_code == 422
+    assert client.patch(f"/api/incidencias/{inc['id']}/avances/{av['id']}", json={"texto": None}).status_code == 422
+    # autor SÍ es nullable -> se puede limpiar
+    r = client.patch(f"/api/incidencias/{inc['id']}/avances/{av['id']}", json={"autor": None})
+    assert r.status_code == 200 and r.json()["autor"] is None
+
+
 def test_borrar_avance(client):
     inc = _seed_incidencia(client)
     av = client.post(f"/api/incidencias/{inc['id']}/avances", json={"texto": "a borrar"}).json()

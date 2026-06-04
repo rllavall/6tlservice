@@ -54,6 +54,9 @@ def crear(incidencia_id: int, payload: AvanceCreate, db: Session = Depends(get_d
 def actualizar(incidencia_id: int, avance_id: int, payload: AvanceUpdate, db: Session = Depends(get_db)) -> models.AvanceIncidencia:
     av = _avance_o_404(db, incidencia_id, avance_id)
     for k, v in payload.model_dump(exclude_unset=True).items():
+        # `autor` es nullable; fecha/tipo/texto no -> null explícito es 422, no un 500 de la BD
+        if v is None and k != "autor":
+            raise HTTPException(422, f"El campo '{k}' no puede ser nulo")
         setattr(av, k, v)
     db.commit()
     db.refresh(av)
