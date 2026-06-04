@@ -55,6 +55,14 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 > - `Avance` = `{id, incidencia_id, fecha (ISO), autor|null, tipo (avance|report|llamada|visita|diagnostico|otro), texto}`. `IncidenciaFicha` gana `avances: Avance[]`.
 > - `GET /api/incidencias/{id}/avances` (orden desc), `POST` (201, `texto` obligatorio→422 si vacío, `fecha` default hoy), `PATCH .../{avance_id}` (no enviar `null` en fecha/tipo/texto), `DELETE .../{avance_id}` (204).
 
+| # | Prompt | Pantalla / contenido |
+|---|--------|----------------------|
+| 15 | `15_categoria_base_instalada.md` | **Categoría de familia** en la base instalada: columna + filtro por categoría (ATE/YAV Module/fastATE Module/Test Fixture/Test Handler/Otro). Backend `Producto.categoria`, `categoria` en `EquipoOut`/`ComponenteOut`, filtro `GET /api/equipos?categoria=`. Selector en el alta/edición de producto + badge por componente en la ficha. |
+
+> **Nota de contrato (categoría, prompt 15):**
+> - `categoria` (slug `ate|yav_module|fastate_module|test_fixture|test_handler|otro`, nullable) en `Producto` (catálogo). `EquipoOut` y `ComponenteOut` la exponen (derivada del producto, solo lectura).
+> - `ProductoCreate`/PUT aceptan `categoria`. `GET /api/equipos?categoria=<slug>` filtra la base instalada (combinable con `numero_serie`/`part_number`/`estado`/`producto_id`).
+
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario
 - **Gris** `#3d3d3f` · **Negro** `#000000` · **Blanco** `#ffffff`
