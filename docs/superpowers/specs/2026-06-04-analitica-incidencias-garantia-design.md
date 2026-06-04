@@ -47,6 +47,12 @@ haber un control de garantía** (no solo el flag manual).
 ### `Equipo`
 - `+ meses_garantia: Optional[int]` (nullable). Al crear el equipo, si no se indica, se hereda de
   `producto.meses_garantia_default`.
+- `+ version: Optional[str]` (nullable). Revisión HW/FW de **esa unidad** (p.ej. "Rev C", "FW 2.1").
+  Distinta del PN/descripción, que viven en el catálogo (`Producto`). El año de fabricación se sigue
+  guardando como `fecha_fabricacion` (fecha completa; en UI se muestra solo el año donde convenga).
+- **Datos del equipo y de dónde vienen:** SN = `numero_serie`; **PN** y **descripción** = del
+  `Producto` asociado (no se duplican en el equipo); año fabricación = `fecha_fabricacion`;
+  **versión** = `version` (nuevo).
 - **Derivados (no columnas):**
   - `fecha_fin_garantia = fecha_entrega + relativedelta(months=meses_garantia)` (None si falta
     `fecha_entrega` o `meses_garantia`).
@@ -59,8 +65,8 @@ haber un control de garantía** (no solo el flag manual).
 
 ### Migración
 `app/migrations.py::add_missing_columns()` (idempotente, patrón ya existente): ADD COLUMN
-`productos.meses_garantia_default`, `equipos.meses_garantia`, `incidencias.tipo` (con default
-`'rma'` para las filas existentes). Sin destruir datos.
+`productos.meses_garantia_default`, `equipos.meses_garantia`, `equipos.version`, `incidencias.tipo`
+(con default `'rma'` para las filas existentes). Sin destruir datos.
 
 ## Lógica de garantía (`app/garantia.py`, módulo puro)
 
@@ -119,15 +125,16 @@ cerradas, backlog}`, `RankingItem{id?, etiqueta, valor}`, `ResumenGarantia{...}`
    - Tablas para rankings de fiabilidad y resumen de garantía.
 2. **Alta/edición de incidencia:** selector **tipo** (4 opciones); para RMA, `en_garantia`
    precargado desde la garantía del equipo (editable). Badge de tipo en lista y ficha.
-3. **Ficha del equipo:** campo `meses_garantia` (editable) + **badge de estado de garantía**
-   (vigente/por vencer/vencida/sin datos) con `fecha_fin_garantia`.
+3. **Ficha + alta/edición del equipo:** campos `meses_garantia` y `version` (editables) +
+   **badge de estado de garantía** (vigente/por vencer/vencida/sin datos) con `fecha_fin_garantia`.
+   La ficha muestra PN/descripción (del producto), SN, año de fabricación y versión.
 4. Entrada de navegación a `/analitica`.
 
 ## Contrato (campos nuevos en API)
 
 - `ProductoOut/Create/Update`: `+ meses_garantia_default`.
-- `EquipoOut/Create/Update/Ficha`: `+ meses_garantia`, `+ fecha_fin_garantia` (derivado, solo Out/Ficha),
-  `+ estado_garantia` (derivado, solo Out/Ficha).
+- `EquipoOut/Create/Update/Ficha`: `+ meses_garantia`, `+ version`, `+ fecha_fin_garantia` (derivado,
+  solo Out/Ficha), `+ estado_garantia` (derivado, solo Out/Ficha).
 - `IncidenciaOut/Create/Update`: `+ tipo`. Filtro `tipo` en el listado.
 
 ## Testing (TDD)
