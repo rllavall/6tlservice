@@ -57,6 +57,7 @@ class Producto(Base):
     fabricante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     modelo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    meses_garantia_default: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=24)
 
 
 class Equipo(Base):
@@ -71,9 +72,22 @@ class Equipo(Base):
     fecha_entrega: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     estado: Mapped[str] = mapped_column(String, default="operativo")
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    meses_garantia: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    version: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     producto: Mapped["Producto"] = relationship()
     componentes: Mapped[list["Componente"]] = relationship(back_populates="equipo")
+
+    @property
+    def fecha_fin_garantia(self):
+        from app import garantia
+        return garantia.fecha_fin_garantia(self)
+
+    @property
+    def estado_garantia(self) -> str:
+        from datetime import date as _date
+        from app import garantia
+        return garantia.estado_garantia(self, _date.today())
 
 
 class Componente(Base):
@@ -129,6 +143,7 @@ class Incidencia(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     codigo: Mapped[str] = mapped_column(String, unique=True)
+    tipo: Mapped[str] = mapped_column(String, default="rma")
     equipo_id: Mapped[Optional[int]] = mapped_column(ForeignKey("equipos.id"), nullable=True)
     componente_id: Mapped[Optional[int]] = mapped_column(ForeignKey("componentes.id"), nullable=True)
     titulo: Mapped[str] = mapped_column(String)
