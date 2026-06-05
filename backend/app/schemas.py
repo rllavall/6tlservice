@@ -484,6 +484,12 @@ class AprobarSolicitudPayload(BaseModel):
     asignado_a: Optional[str] = None
     en_garantia: Optional[bool] = None
 
+    @model_validator(mode="after")
+    def _requiere_sujeto(self) -> "AprobarSolicitudPayload":
+        if self.equipo_id is None and self.componente_id is None:
+            raise ValueError("Indica equipo_id o componente_id (al menos uno)")
+        return self
+
 
 class RechazarSolicitudPayload(BaseModel):
     motivo: str = Field(min_length=1)

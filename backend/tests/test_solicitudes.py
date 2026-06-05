@@ -80,3 +80,48 @@ def test_post_solicitud_publico_sin_token(client_sin_auth, monkeypatch):
 def test_get_solicitudes_protegido_sin_token_401(client_sin_auth):
     assert client_sin_auth.get("/api/solicitudes").status_code == 401
     assert client_sin_auth.get("/api/solicitudes/1").status_code == 401
+
+
+def _seed_solicitud(client, monkeypatch):
+    monkeypatch.setattr(email_notify, "enviar_aviso_solicitud", lambda s: True)
+    return client.post("/api/solicitudes", json={
+        "nombre_contacto": "Ana", "email_contacto": "ana@acme.com",
+        "titulo": "No arranca", "descripcion_problema": "Se apaga solo",
+    }).json()
+
+
+def test_aprobar_crea_incidencia(client, monkeypatch):
+    sol = _seed_solicitud(client, monkeypatch)
+    p = client.post("/api/productos", json={"part_number": "PN-S", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-S", "producto_id": p["id"]}).json()
+    r = client.post(f"/api/solicitudes/{sol['id']}/aprobar", json={
+        "equipo_id": eq["id"], "tipo": "rma", "prioridad": "alta", "asignado_a": "ramon",
+    })
+    assert r.status_code == 201, r.text
+    inc = r.json()
+    assert inc["codigo"].startswith("RMA-") and inc["titulo"] == "No arranca" and inc["prioridad"] == "alta"
+    s2 = client.get(f"/api/solicitudes/{sol['id']}").json()
+    assert s2["estado"] == "aprobada" and s2["incidencia_id"] == inc["id"]
+
+
+def test_aprobar_sin_sujeto_422_o_400(client, monkeypatch):
+    sol = _seed_solicitud(client, monkeypatch)
+    r = client.post(f"/api/solicitudes/{sol['id']}/aprobar", json={"tipo": "rma", "prioridad": "media"})
+    assert r.status_code in (400, 422)
+
+
+def test_aprobar_dos_veces_409(client, monkeypatch):
+    sol = _seed_solicitud(client, monkeypatch)
+    p = client.post("/api/productos", json={"part_number": "PN-S2", "tipo": "equipo", "descripcion": "d"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-S2", "producto_id": p["id"]}).json()
+    client.post(f"/api/solicitudes/{sol['id']}/aprobar", json={"equipo_id": eq["id"], "tipo": "rma", "prioridad": "media"})
+    r = client.post(f"/api/solicitudes/{sol['id']}/aprobar", json={"equipo_id": eq["id"], "tipo": "rma", "prioridad": "media"})
+    assert r.status_code == 409
+
+
+def test_rechazar(client, monkeypatch):
+    sol = _seed_solicitud(client, monkeypatch)
+    r = client.post(f"/api/solicitudes/{sol['id']}/rechazar", json={"motivo": "Duplicada"})
+    assert r.status_code == 200, r.text
+    s2 = client.get(f"/api/solicitudes/{sol['id']}").json()
+    assert s2["estado"] == "rechazada" and s2["motivo_rechazo"] == "Duplicada"
