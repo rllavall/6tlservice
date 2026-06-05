@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 
 
 def _destinatarios_email() -> list[str]:
+    # Si no se define NOTIF_EMAIL_TO, se usa el destinatario de soporte por defecto (SOPORTE_EMAIL_TO,
+    # con fallback support@6tlengineering.com). Intencionado: con SMTP configurado siempre hay un destino.
     raw = os.environ.get("NOTIF_EMAIL_TO") or email_notify._config().get("to")
     return [e.strip() for e in raw.split(",") if e.strip()] if raw else []
 
