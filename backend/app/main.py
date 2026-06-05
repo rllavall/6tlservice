@@ -59,6 +59,9 @@ app.include_router(analitica.router)
 from app.routers import avances
 app.include_router(avances.router)
 
+from app.routers import solicitudes
+app.include_router(solicitudes.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
