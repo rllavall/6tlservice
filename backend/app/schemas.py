@@ -462,3 +462,17 @@ class AuditoriaLogOut(_ORM):
     entidad_id: Optional[int] = None
     accion: str
     cambios: Optional[str] = None
+
+
+# --- Ayuda contextual ---
+class AyudaOut(_ORM):
+    clave: str
+    titulo: Optional[str] = None
+    texto: str
+    pantalla: Optional[str] = None
+
+
+class AyudaUpsert(BaseModel):
+    titulo: Optional[str] = None
+    texto: str = Field(min_length=1)
+    pantalla: Optional[str] = None
