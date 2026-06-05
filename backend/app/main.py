@@ -84,6 +84,9 @@ app.include_router(preventivo.router, dependencies=[Depends(get_current_user)])
 from app.routers import avisos
 app.include_router(avisos.router, dependencies=[Depends(get_current_user)])
 
+from app.routers import sla
+app.include_router(sla.router, dependencies=[Depends(get_current_user)])
+
 from app.routers import auth
 app.include_router(auth.router)
 
