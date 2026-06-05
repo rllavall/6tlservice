@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -181,3 +181,27 @@ class AvanceIncidencia(Base):
     autor: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     tipo: Mapped[str] = mapped_column(String, default="avance")
     texto: Mapped[str] = mapped_column(String)
+
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String, unique=True)
+    nombre: Mapped[str] = mapped_column(String)
+    password_hash: Mapped[str] = mapped_column(String)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    rol: Mapped[str] = mapped_column(String, default="admin")
+    fecha_alta: Mapped[date] = mapped_column(Date)
+
+
+class Sesion(Base):
+    __tablename__ = "sesiones"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    token: Mapped[str] = mapped_column(String, unique=True, index=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"))
+    fecha_creacion: Mapped[datetime] = mapped_column(DateTime)
+    fecha_expiracion: Mapped[datetime] = mapped_column(DateTime)
+
+    usuario: Mapped["Usuario"] = relationship()
