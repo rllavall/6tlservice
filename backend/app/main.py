@@ -75,6 +75,12 @@ app.include_router(auditoria.router, dependencies=[Depends(get_current_user)])
 from app.routers import ayuda
 app.include_router(ayuda.router, dependencies=[Depends(get_current_user)])
 
+from app.routers import contratos
+app.include_router(contratos.router, dependencies=[Depends(get_current_user)])
+
+from app.routers import preventivo
+app.include_router(preventivo.router, dependencies=[Depends(get_current_user)])
+
 from app.routers import auth
 app.include_router(auth.router)
 

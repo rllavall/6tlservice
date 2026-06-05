@@ -59,6 +59,7 @@ class Producto(Base):
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     meses_garantia_default: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=24)
     categoria: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    pn_fabricante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class Equipo(Base):
@@ -76,9 +77,11 @@ class Equipo(Base):
     meses_garantia: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     version: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     numero_serie_cliente: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    contrato_id: Mapped[Optional[int]] = mapped_column(ForeignKey("contratos.id"), nullable=True)
 
     producto: Mapped["Producto"] = relationship()
     componentes: Mapped[list["Componente"]] = relationship(back_populates="equipo")
+    contrato: Mapped[Optional["ContratoMantenimiento"]] = relationship(back_populates="equipos")
 
     @property
     def fecha_fin_garantia(self):
@@ -90,6 +93,12 @@ class Equipo(Base):
         from datetime import date as _date
         from app import garantia
         return garantia.estado_garantia(self, _date.today())
+
+    @property
+    def bajo_contrato(self) -> bool:
+        from datetime import date as _date
+        from app import contratos
+        return self.contrato is not None and contratos.esta_vigente(self.contrato, _date.today())
 
     @property
     def categoria(self):
@@ -201,6 +210,51 @@ class SolicitudSoporte(Base):
     incidencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("incidencias.id"), nullable=True)
     motivo_rechazo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     fecha_resolucion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+
+
+class ContratoMantenimiento(Base):
+    __tablename__ = "contratos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    codigo: Mapped[str] = mapped_column(String, unique=True)
+    cliente_id: Mapped[Optional[int]] = mapped_column(ForeignKey("clientes.id"), nullable=True)
+    nivel: Mapped[str] = mapped_column(String)
+    fecha_inicio: Mapped[date] = mapped_column(Date)
+    fecha_fin: Mapped[date] = mapped_column(Date)
+    cancelado: Mapped[bool] = mapped_column(Boolean, default=False)
+    notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    equipos: Mapped[list["Equipo"]] = relationship(back_populates="contrato")
+
+    @property
+    def estado(self) -> str:
+        from datetime import date as _date
+        from app import contratos
+        return contratos.estado_contrato(self, _date.today())
+
+    @property
+    def vigente(self) -> bool:
+        return self.estado == "vigente"
+
+    @property
+    def nivel_detalle(self):
+        from app import contratos
+        return contratos.nivel_detalle(self.nivel)
+
+
+class AccionPreventiva(Base):
+    __tablename__ = "acciones_preventivo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id"))
+    contrato_id: Mapped[Optional[int]] = mapped_column(ForeignKey("contratos.id"), nullable=True)
+    fecha: Mapped[date] = mapped_column(Date)
+    tecnico: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tipo: Mapped[str] = mapped_column(String)               # on_site | remoto
+    veredicto: Mapped[str] = mapped_column(String)          # ok | con_observaciones | requiere_accion
+    informe: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    proxima_fecha: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    incidencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("incidencias.id"), nullable=True)
 
 
 class Usuario(Base):
