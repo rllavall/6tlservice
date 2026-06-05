@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -487,3 +487,48 @@ class AprobarSolicitudPayload(BaseModel):
 
 class RechazarSolicitudPayload(BaseModel):
     motivo: str = Field(min_length=1)
+
+
+# --- Auth ---
+class UsuarioOut(_ORM):
+    id: int
+    username: str
+    nombre: str
+    rol: str
+    activo: bool
+
+
+class LoginPayload(BaseModel):
+    username: str
+    password: str
+
+
+class LoginOut(BaseModel):
+    token: str
+    usuario: UsuarioOut
+
+
+# --- Auditoría ---
+class AuditoriaLogOut(_ORM):
+    id: int
+    fecha_hora: datetime
+    usuario_id: Optional[int] = None
+    usuario_username: str
+    entidad: str
+    entidad_id: Optional[int] = None
+    accion: str
+    cambios: Optional[str] = None
+
+
+# --- Ayuda contextual ---
+class AyudaOut(_ORM):
+    clave: str
+    titulo: Optional[str] = None
+    texto: str
+    pantalla: Optional[str] = None
+
+
+class AyudaUpsert(BaseModel):
+    titulo: Optional[str] = None
+    texto: str = Field(min_length=1)
+    pantalla: Optional[str] = None

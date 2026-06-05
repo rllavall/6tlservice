@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -201,3 +201,50 @@ class SolicitudSoporte(Base):
     incidencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("incidencias.id"), nullable=True)
     motivo_rechazo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     fecha_resolucion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+
+
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String, unique=True)
+    nombre: Mapped[str] = mapped_column(String)
+    password_hash: Mapped[str] = mapped_column(String)
+    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    rol: Mapped[str] = mapped_column(String, default="admin")
+    fecha_alta: Mapped[date] = mapped_column(Date)
+
+
+class Sesion(Base):
+    __tablename__ = "sesiones"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    token: Mapped[str] = mapped_column(String, unique=True, index=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"))
+    fecha_creacion: Mapped[datetime] = mapped_column(DateTime)
+    fecha_expiracion: Mapped[datetime] = mapped_column(DateTime)
+
+    usuario: Mapped["Usuario"] = relationship()
+
+
+class AuditoriaLog(Base):
+    __tablename__ = "auditoria"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    fecha_hora: Mapped[datetime] = mapped_column(DateTime)
+    usuario_id: Mapped[Optional[int]] = mapped_column(ForeignKey("usuarios.id"), nullable=True)
+    usuario_username: Mapped[str] = mapped_column(String)
+    entidad: Mapped[str] = mapped_column(String)
+    entidad_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    accion: Mapped[str] = mapped_column(String)
+    cambios: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class AyudaTopico(Base):
+    __tablename__ = "ayuda"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    clave: Mapped[str] = mapped_column(String, unique=True, index=True)
+    titulo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    texto: Mapped[str] = mapped_column(String)
+    pantalla: Mapped[Optional[str]] = mapped_column(String, nullable=True)
