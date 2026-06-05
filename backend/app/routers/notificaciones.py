@@ -15,9 +15,8 @@ router = APIRouter(prefix="/api/notificaciones", tags=["notificaciones"])
 @router.post("/digest", response_model=DigestOut)
 def digest(dry_run: bool = False, db: Session = Depends(get_db)) -> dict:
     hoy = date.today()
-    d = notificaciones_service.construir_digest(db, hoy)
     if dry_run:
+        d = notificaciones_service.construir_digest(db, hoy)
         return {**d, "enviado": False, "canales": None}
     r = notificaciones_service.enviar_digest(db, hoy)
-    return {"asunto": d["asunto"], "cuerpo": d["cuerpo"], "resumen": d["resumen"],
-            "total": d["total"], "enviado": True, "canales": r["canales"]}
+    return {**r, "enviado": True}

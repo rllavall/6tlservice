@@ -37,7 +37,7 @@ def construir_digest(db: Session, hoy: date) -> dict:
 def enviar_digest(db: Session, hoy: date, *, notificar_fn=notificaciones.notificar) -> dict:
     d = construir_digest(db, hoy)
     canales = notificar_fn(d["asunto"], d["cuerpo"])
-    return {"asunto": d["asunto"], "resumen": d["resumen"], "total": d["total"], "canales": canales}
+    return {**d, "canales": canales}
 
 
 def mensaje_incidencia(inc, evento: str) -> tuple[str, str]:
