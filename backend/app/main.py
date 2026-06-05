@@ -17,6 +17,12 @@ add_missing_columns(engine)
 from app.auditoria import registrar_listeners
 registrar_listeners()
 
+from app.db import SessionLocal
+from app.ayuda_seed import sembrar_ayuda
+
+with SessionLocal() as _db:
+    sembrar_ayuda(_db)
+
 app = FastAPI(title="6TL Postventa", version="0.1.0")
 
 app.add_middleware(
