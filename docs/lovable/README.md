@@ -67,6 +67,7 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 |---|--------|----------------------|
 | 16 | `16_resumen_servicio.md` | **Cabecera "Resumen de servicio · EN VIVO"**: 4 KPIs (Incidencias abiertas · RMA abierto · En reparación · Tiempo medio de cierre 30d), elimina "SLA en riesgo". Backend `GET /api/analitica/resumen` → `ResumenServicioOut` (`incidencias_abiertas`/`_alta`, `rma_abierto`, `en_reparacion`, `cerradas_30d`, `tiempo_medio_cierre_dias`). |
 | 17 | `17_fix_nueva_incidencia_popup.md` | **FIX (solo frontend):** "Nueva incidencia" no funcionaba — `incidencias.tsx` (ruta padre) no renderizaba `<Outlet/>`, así que las rutas hijas `/incidencias/nueva` y `/incidencias/$id` no se pintaban. Arregla el routing (layout + `incidencias.index.tsx`) y convierte "Nueva incidencia" en un **popup** reutilizable (`NuevaIncidenciaForm`), también usado desde la ficha de equipo. Sin cambios de backend. |
+| 19 | `19_auth_auditoria.md` | **Login + auditoría**: página pública `/login` + Bearer token en `api()` + logout/usuario en cabecera + sección "Historial de cambios" por ficha (`GET /api/auditoria`). Backend: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auditoria`. |
 
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario
