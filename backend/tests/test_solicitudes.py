@@ -65,3 +65,18 @@ def test_email_falla_no_rompe_alta(client, monkeypatch):
         "titulo": "x", "descripcion_problema": "y",
     })
     assert r.status_code == 201, r.text
+
+
+# --- Integración con auth (POST público, GET internos protegidos) ---
+def test_post_solicitud_publico_sin_token(client_sin_auth, monkeypatch):
+    monkeypatch.setattr(email_notify, "enviar_aviso_solicitud", lambda s: True)
+    r = client_sin_auth.post("/api/solicitudes", json={
+        "nombre_contacto": "Ana", "email_contacto": "ana@acme.com",
+        "titulo": "x", "descripcion_problema": "y",
+    })
+    assert r.status_code == 201, r.text
+
+
+def test_get_solicitudes_protegido_sin_token_401(client_sin_auth):
+    assert client_sin_auth.get("/api/solicitudes").status_code == 401
+    assert client_sin_auth.get("/api/solicitudes/1").status_code == 401
