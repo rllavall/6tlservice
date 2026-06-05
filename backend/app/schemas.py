@@ -339,6 +339,7 @@ class IncidenciaFicha(_ORM):
     cambios_configuracion: list[CambioConfiguracionOut] = []
     movimientos: list[MovimientoOut] = []
     avances: list[AvanceOut] = []
+    sla: Optional["SlaIncidencia"] = None
 
 
 # --- Analítica de incidencias ---
@@ -672,3 +673,47 @@ class AyudaUpsert(BaseModel):
     titulo: Optional[str] = None
     texto: str = Field(min_length=1)
     pantalla: Optional[str] = None
+
+
+# --- SLA ---
+_ESTADO_SLA = Literal["en_plazo", "en_riesgo", "incumplido", "sin_sla"]
+
+
+class SlaMetrica(BaseModel):
+    objetivo_fecha: date
+    fecha_real: Optional[date] = None
+    dias_restantes: Optional[int] = None   # None cuando la métrica ya se cumplió
+    estado: _ESTADO_SLA
+
+
+class SlaIncidencia(BaseModel):
+    nivel: str
+    respuesta: SlaMetrica
+    resolucion: SlaMetrica
+    estado_global: _ESTADO_SLA
+
+
+class SlaIncidenciaItem(_ORM):
+    incidencia: IncidenciaOut
+    sla: SlaIncidencia
+
+
+class CumplimientoSla(BaseModel):
+    total: int
+    respuesta_pct: Optional[float] = None
+    resolucion_pct: Optional[float] = None
+
+
+class ResumenSla(BaseModel):
+    en_riesgo: int
+    incumplidas: int
+
+
+class SlaOut(BaseModel):
+    cumplimiento: CumplimientoSla
+    en_riesgo: list[SlaIncidenciaItem] = []
+    incumplidas: list[SlaIncidenciaItem] = []
+    resumen: ResumenSla
+
+
+IncidenciaFicha.model_rebuild()

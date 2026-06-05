@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import garantia
 from app import incidencias_service as svc
+from app import sla_service
 from app import models
 from app.db import get_db
 from app.schemas import (
@@ -120,6 +122,7 @@ def ficha(incidencia_id: int, db: Session = Depends(get_db)) -> IncidenciaFicha:
         cambios_configuracion=[CambioConfiguracionOut.model_validate(c) for c in cambios],
         movimientos=[MovimientoOut.model_validate(m) for m in movimientos],
         avances=[AvanceOut.model_validate(a) for a in avances],
+        sla=sla_service.sla_de_incidencia(db, inc, date.today()),
     )
 
 
