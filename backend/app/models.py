@@ -205,3 +205,16 @@ class Sesion(Base):
     fecha_expiracion: Mapped[datetime] = mapped_column(DateTime)
 
     usuario: Mapped["Usuario"] = relationship()
+
+
+class AuditoriaLog(Base):
+    __tablename__ = "auditoria"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    fecha_hora: Mapped[datetime] = mapped_column(DateTime)
+    usuario_id: Mapped[Optional[int]] = mapped_column(ForeignKey("usuarios.id"), nullable=True)
+    usuario_username: Mapped[str] = mapped_column(String)
+    entidad: Mapped[str] = mapped_column(String)
+    entidad_id: Mapped[int] = mapped_column(Integer)
+    accion: Mapped[str] = mapped_column(String)
+    cambios: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

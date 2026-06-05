@@ -14,6 +14,9 @@ from app.migrations import add_missing_columns
 
 add_missing_columns(engine)
 
+from app.auditoria import registrar_listeners
+registrar_listeners()
+
 app = FastAPI(title="6TL Postventa", version="0.1.0")
 
 app.add_middleware(
