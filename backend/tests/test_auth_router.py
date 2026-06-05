@@ -36,17 +36,17 @@ def test_login_inactivo_401(client, db_session):
     assert r.status_code == 401
 
 
-def test_me_con_token_ok_sin_token_401(client, db_session):
+def test_me_con_token_ok_sin_token_401(client_sin_auth, db_session):
     _crear_usuario(db_session)
-    tok = client.post("/api/auth/login", json={"username": "ramon", "password": "secreto"}).json()["token"]
-    r = client.get("/api/auth/me", headers={"Authorization": f"Bearer {tok}"})
+    tok = client_sin_auth.post("/api/auth/login", json={"username": "ramon", "password": "secreto"}).json()["token"]
+    r = client_sin_auth.get("/api/auth/me", headers={"Authorization": f"Bearer {tok}"})
     assert r.status_code == 200 and r.json()["username"] == "ramon"
-    assert client.get("/api/auth/me").status_code == 401
+    assert client_sin_auth.get("/api/auth/me").status_code == 401
 
 
-def test_logout_invalida_token(client, db_session):
+def test_logout_invalida_token(client_sin_auth, db_session):
     _crear_usuario(db_session)
-    tok = client.post("/api/auth/login", json={"username": "ramon", "password": "secreto"}).json()["token"]
+    tok = client_sin_auth.post("/api/auth/login", json={"username": "ramon", "password": "secreto"}).json()["token"]
     h = {"Authorization": f"Bearer {tok}"}
-    assert client.post("/api/auth/logout", headers=h).status_code == 204
-    assert client.get("/api/auth/me", headers=h).status_code == 401
+    assert client_sin_auth.post("/api/auth/logout", headers=h).status_code == 204
+    assert client_sin_auth.get("/api/auth/me", headers=h).status_code == 401
