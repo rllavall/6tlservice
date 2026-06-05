@@ -35,7 +35,8 @@ def estado_metrica(apertura: date, fecha_real: Optional[date], objetivo_dias: in
     return {
         "objetivo_fecha": objetivo,
         "fecha_real": fecha_real,
-        "dias_restantes": (objetivo - hoy).days,
+        # Solo tiene sentido mientras la métrica está pendiente; si ya se cumplió, None.
+        "dias_restantes": None if fecha_real is not None else (objetivo - hoy).days,
         "estado": estado,
     }
 

@@ -682,7 +682,7 @@ _ESTADO_SLA = Literal["en_plazo", "en_riesgo", "incumplido", "sin_sla"]
 class SlaMetrica(BaseModel):
     objetivo_fecha: date
     fecha_real: Optional[date] = None
-    dias_restantes: int
+    dias_restantes: Optional[int] = None   # None cuando la métrica ya se cumplió
     estado: _ESTADO_SLA
 
 
