@@ -218,3 +218,13 @@ class AuditoriaLog(Base):
     entidad_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     accion: Mapped[str] = mapped_column(String)
     cambios: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class AyudaTopico(Base):
+    __tablename__ = "ayuda"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    clave: Mapped[str] = mapped_column(String, unique=True, index=True)
+    titulo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    texto: Mapped[str] = mapped_column(String)
+    pantalla: Mapped[Optional[str]] = mapped_column(String, nullable=True)
