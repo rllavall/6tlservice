@@ -21,6 +21,7 @@ def listar(
     part_number: Optional[str] = None,
     numero_serie: Optional[str] = None,
     categoria: Optional[str] = None,
+    bajo_contrato: Optional[bool] = None,
     db: Session = Depends(get_db),
 ) -> list[models.Equipo]:
     q = db.query(models.Equipo)
@@ -50,7 +51,10 @@ def listar(
     if categoria is not None:
         sub = db.query(models.Producto.id).filter(models.Producto.categoria == categoria)
         q = q.filter(models.Equipo.producto_id.in_(sub))
-    return q.order_by(models.Equipo.numero_serie).all()
+    equipos = q.order_by(models.Equipo.numero_serie).all()
+    if bajo_contrato is not None:
+        equipos = [e for e in equipos if e.bajo_contrato == bajo_contrato]
+    return equipos
 
 
 @router.post("", response_model=EquipoOut, status_code=201)
