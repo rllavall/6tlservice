@@ -43,3 +43,9 @@ def test_fallo_de_envio_es_best_effort(monkeypatch):
         raise RuntimeError("smtp down")
     ok = email_notify.enviar_aviso_solicitud(_sol(), transporte=_boom)
     assert ok is False   # no relanza
+
+
+def test_smtp_port_no_numerico_cae_a_587(monkeypatch):
+    monkeypatch.setenv("SMTP_PORT", "abc")
+    cfg = email_notify._config()
+    assert cfg["port"] == 587

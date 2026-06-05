@@ -9,9 +9,13 @@ log = logging.getLogger(__name__)
 
 
 def _config() -> dict:
+    try:
+        port = int(os.environ.get("SMTP_PORT", "587"))
+    except ValueError:
+        port = 587
     return {
         "host": os.environ.get("SMTP_HOST"),
-        "port": int(os.environ.get("SMTP_PORT", "587")),
+        "port": port,
         "user": os.environ.get("SMTP_USER"),
         "password": os.environ.get("SMTP_PASSWORD"),
         "from": os.environ.get("SMTP_FROM", "support@6tlengineering.com"),
