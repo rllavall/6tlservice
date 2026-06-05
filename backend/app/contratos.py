@@ -30,7 +30,8 @@ def esta_vigente(contrato, hoy: date) -> bool:
 
 
 def nivel_detalle(nivel: Optional[str]) -> Optional[dict]:
-    return NIVELES.get(nivel) if nivel else None
+    detalle = NIVELES.get(nivel) if nivel else None
+    return dict(detalle) if detalle is not None else None  # copia: no exponer la constante por referencia
 
 
 def sugerir_proxima_fecha(fecha: date, nivel: Optional[str]) -> Optional[date]:

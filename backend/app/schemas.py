@@ -508,6 +508,12 @@ class ContratoCreate(BaseModel):
     fecha_fin: date
     notas: Optional[str] = None
 
+    @model_validator(mode="after")
+    def _fechas_coherentes(self) -> "ContratoCreate":
+        if self.fecha_fin < self.fecha_inicio:
+            raise ValueError("fecha_fin no puede ser anterior a fecha_inicio")
+        return self
+
 
 class ContratoUpdate(BaseModel):
     cliente_id: Optional[int] = None
@@ -516,6 +522,13 @@ class ContratoUpdate(BaseModel):
     fecha_fin: Optional[date] = None
     cancelado: Optional[bool] = None
     notas: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _fechas_coherentes(self) -> "ContratoUpdate":
+        if self.fecha_inicio is not None and self.fecha_fin is not None \
+                and self.fecha_fin < self.fecha_inicio:
+            raise ValueError("fecha_fin no puede ser anterior a fecha_inicio")
+        return self
 
 
 class ContratoResumen(_ORM):

@@ -5,6 +5,12 @@ def _crear_contrato(client, cliente_id=None):
     })
 
 
+def test_crear_contrato_fechas_invertidas_422(client):
+    r = client.post("/api/contratos", json={
+        "nivel": "silver", "fecha_inicio": "2026-12-31", "fecha_fin": "2026-01-01"})
+    assert r.status_code == 422
+
+
 def test_crud_contrato(client):
     r = _crear_contrato(client)
     assert r.status_code == 201, r.text
