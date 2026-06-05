@@ -717,3 +717,13 @@ class SlaOut(BaseModel):
 
 
 IncidenciaFicha.model_rebuild()
+
+
+# --- Notificaciones ---
+class DigestOut(BaseModel):
+    asunto: str
+    cuerpo: str
+    resumen: dict
+    total: int
+    enviado: bool
+    canales: Optional[dict] = None

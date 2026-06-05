@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import garantia
 from app import incidencias_service as svc
+from app import notificaciones_service
 from app import sla_service
 from app import models
 from app.db import get_db
@@ -150,6 +151,10 @@ def transicion(incidencia_id: int, payload: TransicionPayload, db: Session = Dep
         raise HTTPException(409, str(e))
     db.commit()
     db.refresh(inc)
+    try:
+        notificaciones_service.notificar_incidencia(inc, payload.nuevo_estado)
+    except Exception:
+        pass
     return inc
 
 
