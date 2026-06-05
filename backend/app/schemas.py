@@ -600,6 +600,35 @@ class GenerarIncidenciaPrevPayload(BaseModel):
     asignado_a: Optional[str] = None
 
 
+# --- Avisos de servicio ---
+class AvisoPreventivo(_ORM):
+    equipo: EquipoOut
+    contrato: ContratoResumen
+    proxima_fecha: date
+    dias_restantes: int
+    bucket: Literal["vencido", "proximo"]
+    ultima_fecha: Optional[date] = None
+
+
+class AvisoContrato(_ORM):
+    contrato: ContratoResumen
+    cliente: Optional[ClienteOut] = None
+    fecha_fin: date
+    dias_restantes: int
+
+
+class ResumenAvisos(BaseModel):
+    preventivos_vencidos: int
+    preventivos_proximos: int
+    contratos_por_caducar: int
+
+
+class AvisosOut(_ORM):
+    preventivos: list[AvisoPreventivo] = []
+    contratos_por_caducar: list[AvisoContrato] = []
+    resumen: ResumenAvisos
+
+
 # --- Auth ---
 class UsuarioOut(_ORM):
     id: int
