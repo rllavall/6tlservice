@@ -37,6 +37,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rol", default="admin")
     args = parser.parse_args(argv)
 
+    from app.db import Base, engine
+    from app.migrations import add_missing_columns
+    from app.auditoria import registrar_listeners
+    Base.metadata.create_all(engine)
+    add_missing_columns(engine)
+    registrar_listeners()
+
     password = getpass.getpass("Contraseña: ")
     if not password:
         print("Contraseña vacía; abortado.", file=sys.stderr)
