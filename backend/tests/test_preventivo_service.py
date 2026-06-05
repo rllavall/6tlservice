@@ -40,6 +40,19 @@ def test_crear_sin_contrato_proxima_vacia(db_session):
     assert a.proxima_fecha is None
 
 
+def test_crear_contrato_vencido_no_asocia(db_session):
+    c = models.ContratoMantenimiento(
+        codigo="CTR-VEN", nivel="bronze",
+        fecha_inicio=date(2020, 1, 1), fecha_fin=date(2021, 1, 1),
+    )
+    db_session.add(c); db_session.flush()
+    eq = _equipo(db_session, contrato_id=c.id)
+    a = svc.crear(db_session, eq, fecha=date(2026, 6, 5), tipo="on_site",
+                  veredicto="ok", tecnico=None, informe=None, proxima_fecha=None)
+    assert a.contrato_id is None
+    assert a.proxima_fecha is None
+
+
 def test_crear_respeta_proxima_explicita(db_session):
     con = _contrato(db_session)
     eq = _equipo(db_session, contrato_id=con.id)
