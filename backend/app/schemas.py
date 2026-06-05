@@ -459,6 +459,6 @@ class AuditoriaLogOut(_ORM):
     usuario_id: Optional[int] = None
     usuario_username: str
     entidad: str
-    entidad_id: int
+    entidad_id: Optional[int] = None
     accion: str
     cambios: Optional[str] = None

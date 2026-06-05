@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import json
-import logging
 from datetime import date, datetime
 
 from sqlalchemy import event, inspect
 from sqlalchemy.orm import Session
 
 from app import models
-
-log = logging.getLogger(__name__)
 
 _EXCLUIDAS = {models.AuditoriaLog, models.Sesion}
 _CAMPOS_SENSIBLES = {"password_hash", "token"}
