@@ -130,6 +130,8 @@ class EquipoOut(_ORM):
     fecha_fin_garantia: Optional[date] = None
     estado_garantia: Optional[Literal["vigente", "por_vencer", "vencida", "sin_datos"]] = None
     categoria: Optional[str] = None
+    bajo_contrato: bool = False
+    contrato: Optional["ContratoResumen"] = None
 
 
 # --- Componente ---
@@ -397,9 +399,6 @@ class AnaliticaIncidenciasOut(BaseModel):
     garantia: ResumenGarantia = ResumenGarantia()
 
 
-EquipoFicha.model_rebuild()
-
-
 # --- Mapa ---
 class MapaClienteRef(BaseModel):
     id: int
@@ -495,6 +494,64 @@ class AprobarSolicitudPayload(BaseModel):
 
 class RechazarSolicitudPayload(BaseModel):
     motivo: str = Field(min_length=1)
+
+
+# --- Contratos de mantenimiento ---
+_NIVEL = Literal["bronze", "silver", "gold"]
+_ESTADO_CONTRATO = Literal["pendiente", "vigente", "vencido", "cancelado"]
+
+
+class ContratoCreate(BaseModel):
+    cliente_id: Optional[int] = None
+    nivel: _NIVEL
+    fecha_inicio: date
+    fecha_fin: date
+    notas: Optional[str] = None
+
+
+class ContratoUpdate(BaseModel):
+    cliente_id: Optional[int] = None
+    nivel: Optional[_NIVEL] = None
+    fecha_inicio: Optional[date] = None
+    fecha_fin: Optional[date] = None
+    cancelado: Optional[bool] = None
+    notas: Optional[str] = None
+
+
+class ContratoResumen(_ORM):
+    id: int
+    codigo: str
+    nivel: str
+    estado: _ESTADO_CONTRATO
+    vigente: bool
+
+
+class ContratoOut(_ORM):
+    id: int
+    codigo: str
+    cliente_id: Optional[int] = None
+    nivel: str
+    fecha_inicio: date
+    fecha_fin: date
+    cancelado: bool
+    notas: Optional[str] = None
+    estado: _ESTADO_CONTRATO
+    vigente: bool
+    nivel_detalle: Optional[dict] = None
+
+
+class ContratoDetalle(_ORM):
+    contrato: ContratoOut
+    cliente: Optional[ClienteOut] = None
+    equipos: list[EquipoOut] = []
+
+
+class AsignarEquipoPayload(BaseModel):
+    equipo_id: int
+
+
+EquipoOut.model_rebuild()
+EquipoFicha.model_rebuild()
 
 
 # --- Auth ---
