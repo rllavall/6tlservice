@@ -21,7 +21,7 @@ def construir_digest(db: Session, hoy: date) -> dict:
     asunto = f"[6TL Postventa] Resumen de avisos ({total})"
     lineas = [f"Resumen de avisos al {hoy.isoformat()}:", ""]
     lineas.append(f"- Preventivos vencidos: {resumen['preventivos_vencidos']}")
-    lineas.append(f"- Preventivos proximos: {resumen['preventivos_proximos']}")
+    lineas.append(f"- Preventivos próximos: {resumen['preventivos_proximos']}")
     lineas.append(f"- Contratos por caducar: {resumen['contratos_por_caducar']}")
     lineas.append(f"- SLA en riesgo: {resumen['sla_en_riesgo']}")
     lineas.append(f"- SLA incumplidas: {resumen['sla_incumplidas']}")
