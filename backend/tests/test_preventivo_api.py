@@ -39,3 +39,16 @@ def test_generar_incidencia_desde_preventivo(client):
 
 def test_preventivo_protegido_401(client_sin_auth):
     assert client_sin_auth.get("/api/equipos/1/preventivos").status_code == 401
+
+
+def test_404_equipo_inexistente(client):
+    assert client.get("/api/equipos/9999/preventivos").status_code == 404
+    r = client.post("/api/equipos/9999/preventivos", json={
+        "fecha": "2026-06-05", "tipo": "on_site", "veredicto": "ok"})
+    assert r.status_code == 404
+
+
+def test_404_accion_inexistente(client):
+    r = client.post("/api/preventivos/9999/generar-incidencia", json={
+        "tipo": "soporte_tecnico", "prioridad": "alta"})
+    assert r.status_code == 404
