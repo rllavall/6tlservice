@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
@@ -23,10 +25,11 @@ def login(payload: LoginPayload, db: Session = Depends(get_db)):
 
 @router.post("/logout", status_code=204)
 def logout(
-    authorization: str = Header(...),
+    authorization: Optional[str] = Header(default=None),
     db: Session = Depends(get_db),
     usuario: models.Usuario = Depends(get_current_user),
 ) -> None:
+    # get_current_user ya valida el Bearer (401 si falta/expira); aquí solo extraemos el token.
     token = authorization.split(" ", 1)[1].strip()
     auth_service.cerrar_sesion(db, token)
 
