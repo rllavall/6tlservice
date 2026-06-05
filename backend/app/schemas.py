@@ -74,6 +74,7 @@ class ProductoCreate(BaseModel):
     notas: Optional[str] = None
     meses_garantia_default: Optional[int] = 24
     categoria: Optional[_CATEGORIA] = None
+    pn_fabricante: Optional[str] = None
 
 
 class ProductoOut(_ORM):
@@ -86,6 +87,7 @@ class ProductoOut(_ORM):
     notas: Optional[str] = None
     meses_garantia_default: Optional[int] = None
     categoria: Optional[str] = None
+    pn_fabricante: Optional[str] = None
 
 
 # --- Equipo ---
