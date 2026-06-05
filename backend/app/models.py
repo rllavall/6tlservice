@@ -242,6 +242,21 @@ class ContratoMantenimiento(Base):
         return contratos.nivel_detalle(self.nivel)
 
 
+class AccionPreventiva(Base):
+    __tablename__ = "acciones_preventivo"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    equipo_id: Mapped[int] = mapped_column(ForeignKey("equipos.id"))
+    contrato_id: Mapped[Optional[int]] = mapped_column(ForeignKey("contratos.id"), nullable=True)
+    fecha: Mapped[date] = mapped_column(Date)
+    tecnico: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tipo: Mapped[str] = mapped_column(String)               # on_site | remoto
+    veredicto: Mapped[str] = mapped_column(String)          # ok | con_observaciones | requiere_accion
+    informe: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    proxima_fecha: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    incidencia_id: Mapped[Optional[int]] = mapped_column(ForeignKey("incidencias.id"), nullable=True)
+
+
 class Usuario(Base):
     __tablename__ = "usuarios"
 
