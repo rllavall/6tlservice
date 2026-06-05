@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class _ORM(BaseModel):
@@ -431,6 +432,67 @@ class ResumenServicioOut(BaseModel):
     en_reparacion: int
     cerradas_30d: int
     tiempo_medio_cierre_dias: Optional[float] = None
+
+
+# --- Solicitud de soporte (formulario público) ---
+_TIPO_INC = Literal["rma", "soporte_venta", "soporte_tecnico", "calibracion"]
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+class SolicitudCreate(BaseModel):
+    nombre_contacto: str = Field(min_length=1)
+    empresa: Optional[str] = None
+    email_contacto: str
+    telefono_contacto: Optional[str] = None
+    numero_serie_texto: Optional[str] = None
+    part_number_texto: Optional[str] = None
+    titulo: str = Field(min_length=1)
+    descripcion_problema: str = Field(min_length=1)
+    website: Optional[str] = None   # honeypot: debe venir vacío
+
+    @field_validator("email_contacto")
+    @classmethod
+    def _email_valido(cls, v: str) -> str:
+        if not _EMAIL_RE.match(v):
+            raise ValueError("email no válido")
+        return v
+
+
+class SolicitudOut(_ORM):
+    id: int
+    codigo: str
+    estado: str
+    fecha_solicitud: date
+    nombre_contacto: str
+    empresa: Optional[str] = None
+    email_contacto: str
+    telefono_contacto: Optional[str] = None
+    numero_serie_texto: Optional[str] = None
+    part_number_texto: Optional[str] = None
+    titulo: str
+    descripcion_problema: str
+    incidencia_id: Optional[int] = None
+    motivo_rechazo: Optional[str] = None
+    fecha_resolucion: Optional[date] = None
+
+
+class AprobarSolicitudPayload(BaseModel):
+    equipo_id: Optional[int] = None
+    componente_id: Optional[int] = None
+    tipo: _TIPO_INC = "rma"
+    prioridad: _PRIORIDAD = "media"
+    asignado_a: Optional[str] = None
+    en_garantia: Optional[bool] = None
+
+    @model_validator(mode="after")
+    def _requiere_sujeto(self) -> "AprobarSolicitudPayload":
+        if self.equipo_id is None and self.componente_id is None:
+            raise ValueError("Indica equipo_id o componente_id (al menos uno)")
+        return self
+
+
+class RechazarSolicitudPayload(BaseModel):
+    motivo: str = Field(min_length=1)
 
 
 # --- Auth ---

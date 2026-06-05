@@ -78,6 +78,9 @@ app.include_router(ayuda.router, dependencies=[Depends(get_current_user)])
 from app.routers import auth
 app.include_router(auth.router)
 
+from app.routers import solicitudes
+app.include_router(solicitudes.router)
+
 
 @app.get("/api/health")
 def health() -> dict:
