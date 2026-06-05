@@ -554,6 +554,39 @@ EquipoOut.model_rebuild()
 EquipoFicha.model_rebuild()
 
 
+# --- Preventivo ---
+_TIPO_PREV = Literal["on_site", "remoto"]
+_VEREDICTO = Literal["ok", "con_observaciones", "requiere_accion"]
+
+
+class AccionPreventivaCreate(BaseModel):
+    fecha: date
+    tipo: _TIPO_PREV
+    veredicto: _VEREDICTO
+    tecnico: Optional[str] = None
+    informe: Optional[str] = None
+    proxima_fecha: Optional[date] = None
+
+
+class AccionPreventivaOut(_ORM):
+    id: int
+    equipo_id: int
+    contrato_id: Optional[int] = None
+    fecha: date
+    tecnico: Optional[str] = None
+    tipo: str
+    veredicto: str
+    informe: Optional[str] = None
+    proxima_fecha: Optional[date] = None
+    incidencia_id: Optional[int] = None
+
+
+class GenerarIncidenciaPrevPayload(BaseModel):
+    tipo: Literal["rma", "soporte_venta", "soporte_tecnico", "calibracion"] = "soporte_tecnico"
+    prioridad: Literal["baja", "media", "alta"] = "media"
+    asignado_a: Optional[str] = None
+
+
 # --- Auth ---
 class UsuarioOut(_ORM):
     id: int
