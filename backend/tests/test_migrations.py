@@ -90,3 +90,4 @@ def test_agrega_columna_categoria_a_productos():
         c.exec_driver_sql("CREATE TABLE productos (id INTEGER PRIMARY KEY, part_number TEXT)")
     add_missing_columns(eng)
     assert "categoria" in _columnas(eng, "productos")
+    assert "pn_fabricante" in _columnas(eng, "productos")
