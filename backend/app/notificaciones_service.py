@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
@@ -9,7 +9,7 @@ from app import avisos_service, notificaciones, sla_service
 
 def construir_digest(db: Session, hoy: date) -> dict:
     av = avisos_service.construir_avisos(db, hoy)
-    sl = sla_service.construir_sla(db, hoy)
+    sl = sla_service.construir_sla(db, datetime.combine(hoy, datetime.min.time()))
     resumen = {
         "preventivos_vencidos": av["resumen"]["preventivos_vencidos"],
         "preventivos_proximos": av["resumen"]["preventivos_proximos"],

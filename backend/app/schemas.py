@@ -297,6 +297,9 @@ class IncidenciaOut(_ORM):
     fecha_resolucion: Optional[date] = None
     fecha_cierre: Optional[date] = None
     notas: Optional[str] = None
+    creada_en: Optional[datetime] = None
+    respondida_en: Optional[datetime] = None
+    resuelta_en: Optional[datetime] = None
 
 
 class TransicionPayload(BaseModel):
@@ -680,9 +683,9 @@ _ESTADO_SLA = Literal["en_plazo", "en_riesgo", "incumplido", "sin_sla"]
 
 
 class SlaMetrica(BaseModel):
-    objetivo_fecha: date
-    fecha_real: Optional[date] = None
-    dias_restantes: Optional[int] = None   # None cuando la métrica ya se cumplió
+    objetivo: datetime
+    real: Optional[datetime] = None
+    horas_restantes: Optional[int] = None
     estado: _ESTADO_SLA
 
 
