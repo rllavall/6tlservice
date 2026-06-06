@@ -1,43 +1,62 @@
-from datetime import date
+from datetime import date, datetime
 from types import SimpleNamespace
 
 from app import sla
 
 
-def _inc(apertura, diag=None, ini_rep=None, reso=None, cierre=None):
+def _inc(apertura, creada_en=None, diag=None, ini_rep=None, reso=None, cierre=None,
+         respondida_en=None, resuelta_en=None):
     return SimpleNamespace(
-        fecha_apertura=apertura, fecha_diagnostico=diag, fecha_inicio_reparacion=ini_rep,
-        fecha_resolucion=reso, fecha_cierre=cierre)
+        fecha_apertura=apertura, creada_en=creada_en, fecha_diagnostico=diag,
+        fecha_inicio_reparacion=ini_rep, fecha_resolucion=reso, fecha_cierre=cierre,
+        respondida_en=respondida_en, resuelta_en=resuelta_en)
 
 
-def test_sla_niveles():
-    assert sla.SLA_NIVELES["gold"]["respuesta_dias"] == 1
-    assert sla.SLA_NIVELES["bronze"]["resolucion_dias"] == 15
+def test_sla_niveles_horas():
+    assert sla.SLA_NIVELES["gold"]["respuesta_horas"] == 2
+    assert sla.SLA_NIVELES["gold"]["resolucion_horas"] == 24
+    assert sla.SLA_NIVELES["bronze"]["resolucion_horas"] == 168
+
+
+def test_combinar_usa_dia_y_hora():
+    d = date(2026, 6, 1)
+    ts = datetime(2025, 1, 1, 14, 30)
+    assert sla._combinar(d, ts) == datetime(2026, 6, 1, 14, 30)
+    assert sla._combinar(d, None) == datetime(2026, 6, 1, 0, 0)
+    assert sla._combinar(None, ts) is None
 
 
 def test_metrica_cumplida_en_plazo():
-    m = sla.estado_metrica(date(2026, 6, 1), date(2026, 6, 2), 3, date(2026, 6, 10))
+    inicio = datetime(2026, 6, 1, 0, 0)
+    m = sla.estado_metrica(inicio, datetime(2026, 6, 1, 1, 0), 2, datetime(2026, 6, 2))
     assert m["estado"] == "en_plazo"
-    assert m["objetivo_fecha"] == date(2026, 6, 4)
+    assert m["horas_restantes"] is None
+    assert m["objetivo"] == datetime(2026, 6, 1, 2, 0)
 
 
-def test_metrica_cumplida_tarde_incumplido():
-    m = sla.estado_metrica(date(2026, 6, 1), date(2026, 6, 9), 3, date(2026, 6, 10))
+def test_metrica_cumplida_tarde():
+    inicio = datetime(2026, 6, 1, 0, 0)
+    m = sla.estado_metrica(inicio, datetime(2026, 6, 1, 5, 0), 2, datetime(2026, 6, 2))
     assert m["estado"] == "incumplido"
 
 
 def test_metrica_pendiente_en_riesgo():
-    m = sla.estado_metrica(date(2026, 6, 1), None, 5, date(2026, 6, 5))  # objetivo 06-06, quedan 1 día
+    inicio = datetime(2026, 6, 1, 0, 0)
+    m = sla.estado_metrica(inicio, None, 24, datetime(2026, 6, 1, 20, 0))
     assert m["estado"] == "en_riesgo"
+    assert m["horas_restantes"] == 4
 
 
 def test_metrica_pendiente_incumplido():
-    m = sla.estado_metrica(date(2026, 6, 1), None, 3, date(2026, 6, 10))  # objetivo 06-04 < hoy
+    inicio = datetime(2026, 6, 1, 0, 0)
+    m = sla.estado_metrica(inicio, None, 2, datetime(2026, 6, 1, 10, 0))
     assert m["estado"] == "incumplido"
+    assert m["horas_restantes"] < 0
 
 
 def test_metrica_pendiente_en_plazo():
-    m = sla.estado_metrica(date(2026, 6, 1), None, 15, date(2026, 6, 2))  # objetivo 06-16, lejos
+    inicio = datetime(2026, 6, 1, 0, 0)
+    m = sla.estado_metrica(inicio, None, 168, datetime(2026, 6, 1, 1, 0))
     assert m["estado"] == "en_plazo"
 
 
@@ -47,10 +66,10 @@ def test_peor():
     assert sla.peor("en_plazo", "en_plazo") == "en_plazo"
 
 
-def test_evaluar_usa_primera_fecha_respuesta():
-    inc = _inc(date(2026, 6, 1), diag=None, ini_rep=date(2026, 6, 2))
-    ev = sla.evaluar(inc, "gold", date(2026, 6, 10))
+def test_evaluar_dia_de_apertura_hora_de_creada():
+    inc = _inc(date(2026, 6, 1), creada_en=datetime(2026, 6, 1, 10, 0),
+               diag=date(2026, 6, 1), respondida_en=datetime(2026, 6, 1, 11, 0))
+    ev = sla.evaluar(inc, "gold", datetime(2026, 6, 10))
     assert ev["nivel"] == "gold"
+    assert ev["respuesta"]["real"] == datetime(2026, 6, 1, 11, 0)
     assert ev["respuesta"]["estado"] == "en_plazo"
-    assert ev["respuesta"]["fecha_real"] == date(2026, 6, 2)
-    assert ev["estado_global"] in {"en_plazo", "en_riesgo", "incumplido"}

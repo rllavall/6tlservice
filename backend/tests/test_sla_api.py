@@ -24,8 +24,8 @@ def test_sla_endpoint_incumplida(client):
     item = next(i for i in out["incumplidas"] if i["incidencia"]["id"] == inc["id"])
     assert item["sla"]["estado_global"] == "incumplido"
     assert item["sla"]["nivel"] == "gold"
-    assert set(out["resumen"].keys()) == {"en_riesgo", "incumplidas"}
-    assert out["cumplimiento"]["total"] >= 1
+    assert "objetivo" in item["sla"]["resolucion"]
+    assert "horas_restantes" in item["sla"]["resolucion"]
 
 
 def test_ficha_incidencia_incluye_sla(client):

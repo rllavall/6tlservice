@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -123,7 +123,7 @@ def ficha(incidencia_id: int, db: Session = Depends(get_db)) -> IncidenciaFicha:
         cambios_configuracion=[CambioConfiguracionOut.model_validate(c) for c in cambios],
         movimientos=[MovimientoOut.model_validate(m) for m in movimientos],
         avances=[AvanceOut.model_validate(a) for a in avances],
-        sla=sla_service.sla_de_incidencia(db, inc, date.today()),
+        sla=sla_service.sla_de_incidencia(db, inc, datetime.now()),
     )
 
 
