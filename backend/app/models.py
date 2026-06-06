@@ -178,6 +178,9 @@ class Incidencia(Base):
     fecha_inicio_reparacion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     fecha_resolucion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     fecha_cierre: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    creada_en: Mapped[Optional[datetime]] = mapped_column(DateTime, default=datetime.now, nullable=True)
+    respondida_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    resuelta_en: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 

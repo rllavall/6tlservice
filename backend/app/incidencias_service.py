@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -57,10 +57,12 @@ def transicionar(
         raise IncidenciaError("Para resolver la incidencia hace falta una resolución")
 
     fecha = fecha or date.today()
+    ahora = datetime.now()
 
     if es_reabrir:
         inc.fecha_resolucion = None
         inc.fecha_cierre = None
+        inc.resuelta_en = None
         inc.estado = "en_reparacion"
         db.flush()
         return inc
@@ -69,5 +71,9 @@ def transicionar(
     campo = FECHA_DE_ESTADO.get(nuevo_estado)
     if campo is not None:
         setattr(inc, campo, fecha)
+    if nuevo_estado in ("diagnostico", "en_reparacion") and inc.respondida_en is None:
+        inc.respondida_en = ahora
+    if nuevo_estado == "resuelta":
+        inc.resuelta_en = ahora
     db.flush()
     return inc
