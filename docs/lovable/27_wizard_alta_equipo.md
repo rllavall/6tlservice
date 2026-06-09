@@ -51,7 +51,7 @@ Al confirmar: `POST /api/equipos/alta` con el body:
   "fecha_fabricacion": null, "fecha_entrega": "2026-06-09",
   "estado": "operativo", "notas": null, "meses_garantia": 24,
   "version": null, "numero_serie_cliente": null,
-  "ubicacion_id": null, "movimiento_notas": null,
+  "ubicacion_id": null, "movimiento_fecha": null, "movimiento_notas": null,
   "componentes": [
     {"producto_id": 0, "numero_serie": "...", "posicion": null, "notas": null}
   ]

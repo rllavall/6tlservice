@@ -116,12 +116,14 @@ not set". Botón **Create unit** (confirmación = única llamada al backend).
 - Serial de componente duplicado (con BD o entre filas) → **rollback total**.
 - Ubicación que pertenece a otro cliente → error, nada creado.
 - `producto_id` de equipo que es `tipo=componente` (y viceversa en componentes)
-  → 422, nada creado.
+  → 409, nada creado.
 - Atomicidad: forzar fallo en el último componente y verificar que no queda
   ninguna fila parcial.
-- Precarga de garantía la decide el frontend; el backend respeta el
-  `meses_garantia` que reciba (si llega `None`, queda `None` — el prefill ocurre
-  en el cliente).
+- Garantía: el backend autorrellena `meses_garantia` desde
+  `producto.meses_garantia_default` cuando llega `None` (mismo comportamiento que
+  `POST /api/equipos`), de modo que nunca queda sin dato silenciosamente. Si el
+  cliente envía un valor explícito, se respeta. El wizard además lo precarga en
+  la UI al elegir el modelo (doble red de seguridad).
 
 ## Frontend (prompt Lovable)
 
