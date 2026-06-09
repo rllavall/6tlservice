@@ -103,9 +103,11 @@ def alta_equipo_completa(db: Session, payload: EquipoAltaCreate) -> models.Equip
     db.add(eq)
     db.flush()  # asigna eq.id
 
+    # --- fecha de entrega resuelta (compartida por movimiento y montajes) ---
+    fecha_mov = payload.movimiento_fecha or payload.fecha_entrega or date.today()
+
     # --- movimiento inicial de ubicación ---
     if ubic is not None:
-        fecha_mov = payload.movimiento_fecha or payload.fecha_entrega or date.today()
         trazabilidad.registrar_movimiento(
             db, eq.id, ubic.id, fecha_mov, "entrega", usuario=None, notas=payload.movimiento_notas
         )
@@ -115,6 +117,6 @@ def alta_equipo_completa(db: Session, payload: EquipoAltaCreate) -> models.Equip
         comp = models.Componente(producto_id=c.producto_id, numero_serie=c.numero_serie, notas=c.notas)
         db.add(comp)
         db.flush()  # asigna comp.id
-        trazabilidad.montar_componente(db, comp.id, eq.id, c.posicion, date.today(), "entrega_inicial")
+        trazabilidad.montar_componente(db, comp.id, eq.id, c.posicion, fecha_mov, "entrega_inicial")
 
     return eq
