@@ -80,3 +80,22 @@ def test_alta_con_componentes_los_monta(client, prod_equipo, prod_componente):
     comps = client.get(f"/api/componentes?equipo_id={eid}").json()
     series = sorted(c["numero_serie"] for c in comps)
     assert series == ["C-1", "C-2"]
+
+
+def test_alta_rechaza_producto_equipo_no_equipo(client, prod_componente):
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "X", "producto_id": prod_componente,
+    })
+    assert r.status_code == 409
+    assert r.json()["detail"]["step"] == "unit"
+
+
+def test_alta_rechaza_componente_no_componente(client, prod_equipo):
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-400", "producto_id": prod_equipo,
+        "componentes": [{"producto_id": prod_equipo, "numero_serie": "C-X"}],
+    })
+    assert r.status_code == 409
+    assert r.json()["detail"]["step"] == "component"
+    assert r.json()["detail"]["index"] == 0
+    assert client.get("/api/equipos?numero_serie=EQ-400").json() == []
