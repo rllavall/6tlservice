@@ -122,3 +122,29 @@ def test_alta_componente_duplicado_en_payload_rollback_total(client, prod_equipo
     assert r.json()["detail"]["index"] == 1
     assert client.get("/api/equipos?numero_serie=EQ-500").json() == []
     assert client.get("/api/componentes").json() == []
+
+
+def test_alta_ubicacion_de_otro_cliente_rechaza(client, prod_equipo):
+    c1 = client.post("/api/clientes", json={"nombre": "Cli-1"}).json()["id"]
+    c2 = client.post("/api/clientes", json={"nombre": "Cli-2"}).json()["id"]
+    ub2 = client.post("/api/ubicaciones", json={
+        "nombre": "Planta C2", "tipo": "fabrica_cliente", "cliente_id": c2,
+    }).json()["id"]
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-600", "producto_id": prod_equipo,
+        "cliente_id": c1, "ubicacion_id": ub2,
+    })
+    assert r.status_code == 409
+    assert r.json()["detail"]["step"] == "location"
+    assert client.get("/api/equipos?numero_serie=EQ-600").json() == []
+
+
+def test_alta_ubicacion_sin_cliente_se_acepta(client, prod_equipo, cliente):
+    ub = client.post("/api/ubicaciones", json={
+        "nombre": "Almacén 6TL", "tipo": "sede_6tl",
+    }).json()["id"]
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-601", "producto_id": prod_equipo,
+        "cliente_id": cliente, "ubicacion_id": ub,
+    })
+    assert r.status_code == 201, r.text
