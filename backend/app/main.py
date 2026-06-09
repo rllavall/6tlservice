@@ -1,5 +1,11 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Carga backend/.env en os.environ antes de leer cualquier configuración
+# (SMTP, Telegram, auth). El entorno real siempre gana sobre el fichero.
+from app.env_file import load_env_file
+load_env_file()
+
 from app.deps import get_current_user
 
 from app.db import Base, engine
