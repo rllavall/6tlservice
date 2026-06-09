@@ -53,3 +53,15 @@ def test_alta_respeta_garantia_explicita(client, prod_equipo):
     })
     assert r.status_code == 201, r.text
     assert r.json()["meses_garantia"] == 12
+
+
+def test_alta_con_ubicacion_crea_movimiento(client, prod_equipo, cliente, ubicacion):
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-200", "producto_id": prod_equipo,
+        "cliente_id": cliente, "ubicacion_id": ubicacion,
+    })
+    assert r.status_code == 201, r.text
+    eid = r.json()["id"]
+    ficha = client.get(f"/api/equipos/{eid}").json()
+    assert ficha["ubicacion_actual"] is not None
+    assert ficha["ubicacion_actual"]["id"] == ubicacion
