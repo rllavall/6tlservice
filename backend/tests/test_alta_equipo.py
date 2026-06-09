@@ -99,3 +99,26 @@ def test_alta_rechaza_componente_no_componente(client, prod_equipo):
     assert r.json()["detail"]["step"] == "component"
     assert r.json()["detail"]["index"] == 0
     assert client.get("/api/equipos?numero_serie=EQ-400").json() == []
+
+
+def test_alta_serie_equipo_duplicada_409_nada_creado(client, prod_equipo):
+    client.post("/api/equipos/alta", json={"numero_serie": "DUP", "producto_id": prod_equipo})
+    r = client.post("/api/equipos/alta", json={"numero_serie": "DUP", "producto_id": prod_equipo})
+    assert r.status_code == 409
+    assert r.json()["detail"]["step"] == "unit"
+    assert len(client.get(f"/api/equipos?producto_id={prod_equipo}").json()) == 1
+
+
+def test_alta_componente_duplicado_en_payload_rollback_total(client, prod_equipo, prod_componente):
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-500", "producto_id": prod_equipo,
+        "componentes": [
+            {"producto_id": prod_componente, "numero_serie": "SAME"},
+            {"producto_id": prod_componente, "numero_serie": "SAME"},
+        ],
+    })
+    assert r.status_code == 409
+    assert r.json()["detail"]["step"] == "component"
+    assert r.json()["detail"]["index"] == 1
+    assert client.get("/api/equipos?numero_serie=EQ-500").json() == []
+    assert client.get("/api/componentes").json() == []
