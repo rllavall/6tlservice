@@ -115,6 +115,31 @@ class EquipoUpdate(BaseModel):
     numero_serie_cliente: Optional[str] = None
 
 
+# --- Alta de equipo (wizard) ---
+class EquipoAltaComponente(BaseModel):
+    producto_id: int
+    numero_serie: str
+    posicion: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class EquipoAltaCreate(BaseModel):
+    numero_serie: str
+    producto_id: int
+    cliente_id: Optional[int] = None
+    fecha_fabricacion: Optional[date] = None
+    fecha_entrega: Optional[date] = None
+    estado: Literal["operativo", "baja"] = "operativo"
+    notas: Optional[str] = None
+    meses_garantia: Optional[int] = None
+    version: Optional[str] = None
+    numero_serie_cliente: Optional[str] = None
+    ubicacion_id: Optional[int] = None
+    movimiento_fecha: Optional[date] = None
+    movimiento_notas: Optional[str] = None
+    componentes: list[EquipoAltaComponente] = Field(default_factory=list)
+
+
 class EquipoOut(_ORM):
     id: int
     numero_serie: str

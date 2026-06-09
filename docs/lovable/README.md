@@ -69,6 +69,7 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 | 17 | `17_fix_nueva_incidencia_popup.md` | **FIX (solo frontend):** "Nueva incidencia" no funcionaba — `incidencias.tsx` (ruta padre) no renderizaba `<Outlet/>`, así que las rutas hijas `/incidencias/nueva` y `/incidencias/$id` no se pintaban. Arregla el routing (layout + `incidencias.index.tsx`) y convierte "Nueva incidencia" en un **popup** reutilizable (`NuevaIncidenciaForm`), también usado desde la ficha de equipo. Sin cambios de backend. |
 | 19 | `19_auth_auditoria.md` | **Login + auditoría**: página pública `/login` + Bearer token en `api()` + logout/usuario en cabecera + sección "Historial de cambios" por ficha (`GET /api/auditoria`). Backend: `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auditoria`. |
 | 20 | `20_ayuda_contextual.md` | **Ayuda contextual**: componente `<HelpTip clave=...>` (tooltip "?") que carga el catálogo `GET /api/ayuda` y muestra el texto por clave, colocado junto a campos/secciones clave. Backend: `GET/PUT/DELETE /api/ayuda` (catálogo editable, sembrado). |
+| 27 | `27_wizard_alta_equipo.md` | **Rediseño** de `/equipos/nuevo` como wizard de 4 pasos (inglés) con barra de progreso, valores por defecto inteligentes y paso de revisión final. Una sola llamada al backend al confirmar: `POST /api/equipos/alta`. |
 
 ## Identidad corporativa (de `6TL_Línies bàsiques imatge corporativa.pdf`)
 - **Lila** `#9e007e` (Pantone 2415C) — color de marca / acento primario

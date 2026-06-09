@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import models, trazabilidad
 from app.db import get_db
-from app.schemas import CambioConfiguracionOut, ClienteOut, ComponenteOut, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, IncidenciaOut, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
+from app.schemas import CambioConfiguracionOut, ClienteOut, ComponenteOut, EquipoAltaCreate, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, IncidenciaOut, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
 
 router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 
@@ -77,6 +77,23 @@ def crear(payload: EquipoCreate, db: Session = Depends(get_db)) -> models.Equipo
     except IntegrityError:
         db.rollback()
         raise HTTPException(409, "Ya existe un equipo con ese (producto, numero_serie)")
+    db.refresh(eq)
+    return eq
+
+
+@router.post("/alta", response_model=EquipoOut, status_code=201)
+def alta(payload: EquipoAltaCreate, db: Session = Depends(get_db)) -> models.Equipo:
+    from app.alta_equipo import AltaError, alta_equipo_completa
+
+    try:
+        eq = alta_equipo_completa(db, payload)
+        db.commit()
+    except AltaError as e:
+        db.rollback()
+        raise HTTPException(e.status_code, {"step": e.step, "index": e.index, "message": e.message})
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, {"step": "unit", "index": None, "message": "Conflicto de integridad al crear el alta"})
     db.refresh(eq)
     return eq
 
