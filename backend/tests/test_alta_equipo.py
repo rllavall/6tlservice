@@ -65,3 +65,18 @@ def test_alta_con_ubicacion_crea_movimiento(client, prod_equipo, cliente, ubicac
     ficha = client.get(f"/api/equipos/{eid}").json()
     assert ficha["ubicacion_actual"] is not None
     assert ficha["ubicacion_actual"]["id"] == ubicacion
+
+
+def test_alta_con_componentes_los_monta(client, prod_equipo, prod_componente):
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-300", "producto_id": prod_equipo,
+        "componentes": [
+            {"producto_id": prod_componente, "numero_serie": "C-1", "posicion": "slot1"},
+            {"producto_id": prod_componente, "numero_serie": "C-2"},
+        ],
+    })
+    assert r.status_code == 201, r.text
+    eid = r.json()["id"]
+    comps = client.get(f"/api/componentes?equipo_id={eid}").json()
+    series = sorted(c["numero_serie"] for c in comps)
+    assert series == ["C-1", "C-2"]
