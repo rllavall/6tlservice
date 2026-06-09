@@ -34,3 +34,22 @@ def test_alta_schema_defaults():
     assert p.estado == "operativo"
     assert p.componentes == []
     assert p.ubicacion_id is None
+
+
+def test_alta_solo_equipo_prefill_garantia(client, prod_equipo):
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-100", "producto_id": prod_equipo,
+    })
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["numero_serie"] == "EQ-100"
+    assert body["meses_garantia"] == 24
+    assert client.get(f"/api/equipos/{body['id']}").status_code == 200
+
+
+def test_alta_respeta_garantia_explicita(client, prod_equipo):
+    r = client.post("/api/equipos/alta", json={
+        "numero_serie": "EQ-101", "producto_id": prod_equipo, "meses_garantia": 12,
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["meses_garantia"] == 12
