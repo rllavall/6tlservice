@@ -16,6 +16,9 @@ ACCIONES_CONFIG = ["montaje", "desmontaje"]
 MOTIVOS_CONFIG = ["entrega_inicial", "sustitucion", "upgrade", "reparacion", "retirada"]
 ESTADOS_INCIDENCIA = ["abierta", "diagnostico", "en_reparacion", "resuelta", "cerrada"]
 PRIORIDADES_INCIDENCIA = ["baja", "media", "alta"]
+ESTADOS_GARANTIA_FAB = ["no_aplica", "pendiente_activacion", "activada", "rechazada"]
+TIPOS_DERIVACION = ["externa_fabricante", "interna_departamento"]
+ESTADOS_DERIVACION = ["pendiente", "enviada", "en_proveedor", "recibida", "cerrada"]
 
 
 class Cliente(Base):
@@ -60,6 +63,7 @@ class Producto(Base):
     meses_garantia_default: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, default=24)
     categoria: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     pn_fabricante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    fabricante_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fabricantes.id"), nullable=True)
 
 
 class Equipo(Base):
@@ -305,3 +309,59 @@ class AyudaTopico(Base):
     titulo: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     texto: Mapped[str] = mapped_column(String)
     pantalla: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class Fabricante(Base):
+    __tablename__ = "fabricantes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    nombre: Mapped[str] = mapped_column(String, unique=True)
+    email_service: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    email_rma: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    url_activacion_garantia: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    requiere_activacion_web: Mapped[bool] = mapped_column(Boolean, default=False)
+    politica_rma: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class GarantiaFabricante(Base):
+    __tablename__ = "garantias_fabricante"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    componente_id: Mapped[int] = mapped_column(ForeignKey("componentes.id"), unique=True)
+    fabricante_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fabricantes.id"), nullable=True)
+    estado: Mapped[str] = mapped_column(String, default="pendiente_activacion")
+    fecha_solicitud: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    fecha_activacion: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    meses_garantia: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    referencia_fabricante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    responsable: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    @property
+    def fecha_fin(self):
+        from app import garantia_fabricante
+        return garantia_fabricante.fecha_fin(self)
+
+    @property
+    def estado_cobertura(self) -> str:
+        from datetime import date as _date
+        from app import garantia_fabricante
+        return garantia_fabricante.estado_cobertura(self, _date.today())
+
+
+class Derivacion(Base):
+    __tablename__ = "derivaciones"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    incidencia_id: Mapped[int] = mapped_column(ForeignKey("incidencias.id"))
+    tipo: Mapped[str] = mapped_column(String)
+    fabricante_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fabricantes.id"), nullable=True)
+    departamento: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    tu_referencia: Mapped[str] = mapped_column(String, unique=True)
+    referencia_externa: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    estado: Mapped[str] = mapped_column(String, default="pendiente")
+    fecha_creacion: Mapped[date] = mapped_column(Date)
+    fecha_envio: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    fecha_cierre: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
