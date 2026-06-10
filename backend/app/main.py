@@ -96,6 +96,9 @@ app.include_router(sla.router, dependencies=[Depends(get_current_user)])
 from app.routers import notificaciones
 app.include_router(notificaciones.router, dependencies=[Depends(get_current_user)])
 
+from app.routers import fabricantes
+app.include_router(fabricantes.router, dependencies=[Depends(get_current_user)])
+
 from app.routers import auth
 app.include_router(auth.router)
 
