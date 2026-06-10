@@ -25,9 +25,12 @@ registrar_listeners()
 
 from app.db import SessionLocal
 from app.ayuda_seed import sembrar_ayuda
+from app.fabricantes_seed import sembrar_fabricantes_desde_texto
 
 with SessionLocal() as _db:
     sembrar_ayuda(_db)
+    sembrar_fabricantes_desde_texto(_db)
+    _db.commit()
 
 app = FastAPI(title="6TL Postventa", version="0.1.0")
 
