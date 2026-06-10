@@ -37,6 +37,21 @@ CATALOGO_INICIAL = [
      "texto": "Tiempo medio de cierre en los últimos 30 días: de la apertura al cierre de la incidencia."},
     {"clave": "auditoria.historial", "titulo": "Historial de cambios", "pantalla": "auditoria",
      "texto": "Quién creó, editó o borró cada dato de esta ficha y cuándo."},
+    {"clave": "fabricantes.maestro", "titulo": "Maestro de fabricantes", "pantalla": "fabricantes",
+     "texto": "Ficha por marca (National, Keysight…): a qué email se escribe para activar "
+              "garantía y para RMA, si exige activación en su web, y su política de RMA. "
+              "Es la base para automatizar avisos y derivaciones."},
+    {"clave": "garantia.activar", "titulo": "Activar garantía del fabricante", "pantalla": "componentes",
+     "texto": "Inicia la activación de la garantía del instrumento con el fabricante. El "
+              "sistema redacta el aviso y deja la garantía 'pendiente de activación' hasta "
+              "que registres el feedback (fecha real y referencia), que arranca el conteo."},
+    {"clave": "garantia.confirmar", "titulo": "Confirmar activación", "pantalla": "componentes",
+     "texto": "Registra la respuesta del fabricante: fecha real de inicio y referencia. A "
+              "partir de esa fecha la garantía cuenta y se calcula su vencimiento."},
+    {"clave": "derivaciones.crear", "titulo": "Derivar incidencia (RMA / interno)", "pantalla": "incidencias",
+     "texto": "Abre una derivación desde la incidencia: externa hacia un fabricante (con tu "
+              "referencia y la suya) o interna hacia un departamento. Misma mecánica para "
+              "ambos; al cerrarse, resuelve la incidencia."},
 ]
 
 

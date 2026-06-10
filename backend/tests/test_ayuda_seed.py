@@ -27,3 +27,14 @@ def test_sembrar_no_pisa_texto_existente(db_session):
 def test_catalogo_sin_claves_duplicadas():
     claves = [item["clave"] for item in CATALOGO_INICIAL]
     assert len(claves) == len(set(claves))
+
+
+def test_siembra_incluye_topicos_de_fabricantes(db_session):
+    from app.ayuda_seed import sembrar_ayuda
+    from app import models
+    sembrar_ayuda(db_session)
+    db_session.commit()
+    claves = {t.clave for t in db_session.query(models.AyudaTopico).all()}
+    assert "fabricantes.maestro" in claves
+    assert "garantia.activar" in claves
+    assert "derivaciones.crear" in claves
