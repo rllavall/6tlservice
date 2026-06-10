@@ -755,3 +755,90 @@ class DigestOut(BaseModel):
     total: int
     enviado: bool
     canales: Optional[dict] = None
+
+
+# --- Motor de Fabricantes y RMA ---
+class FabricanteCreate(BaseModel):
+    nombre: str
+    email_service: Optional[str] = None
+    email_rma: Optional[str] = None
+    url_activacion_garantia: Optional[str] = None
+    requiere_activacion_web: bool = False
+    politica_rma: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class FabricanteUpdate(BaseModel):
+    nombre: Optional[str] = None
+    email_service: Optional[str] = None
+    email_rma: Optional[str] = None
+    url_activacion_garantia: Optional[str] = None
+    requiere_activacion_web: Optional[bool] = None
+    politica_rma: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class FabricanteOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    nombre: str
+    email_service: Optional[str] = None
+    email_rma: Optional[str] = None
+    url_activacion_garantia: Optional[str] = None
+    requiere_activacion_web: bool
+    politica_rma: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class GarantiaActivarPayload(BaseModel):
+    meses_garantia: Optional[int] = None
+    responsable: Optional[str] = None
+
+
+class GarantiaConfirmarPayload(BaseModel):
+    fecha_activacion: date
+    referencia: Optional[str] = None
+
+
+class GarantiaFabricanteOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    componente_id: int
+    fabricante_id: Optional[int] = None
+    estado: str
+    fecha_solicitud: Optional[date] = None
+    fecha_activacion: Optional[date] = None
+    meses_garantia: Optional[int] = None
+    referencia_fabricante: Optional[str] = None
+    responsable: Optional[str] = None
+    fecha_fin: Optional[date] = None
+    estado_cobertura: str
+
+
+class DerivacionCreate(BaseModel):
+    tipo: str
+    fabricante_id: Optional[int] = None
+    departamento: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class DerivacionUpdate(BaseModel):
+    estado: Optional[str] = None
+    referencia_externa: Optional[str] = None
+    notas: Optional[str] = None
+
+
+class DerivacionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    incidencia_id: int
+    tipo: str
+    fabricante_id: Optional[int] = None
+    departamento: Optional[str] = None
+    tu_referencia: str
+    referencia_externa: Optional[str] = None
+    estado: str
+    fecha_creacion: date
+    fecha_envio: Optional[date] = None
+    fecha_cierre: Optional[date] = None
+    notas: Optional[str] = None
