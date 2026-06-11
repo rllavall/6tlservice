@@ -76,7 +76,8 @@ flag `--commit`. Reglas, evaluadas en orden (primera que casa gana):
    `wiring` o `harness`.
 3. **Instrumento** — fabricante en {Keysight, Agilent, National Instruments, NI,
    Pickering, Chroma, Ametek, Höcherl, Hocherl}.
-4. **Accesories** — todo lo demás (6TL, Cliff, tornillería, etc.).
+4. **Accesories** — todo lo demás (6TL, conectores Cliff `CP30xxx`,
+   tornillería, etc.).
 
 El script imprime el conteo por categoría y la lista de los clasificados como
 `accesorios` para que el usuario revise los dudosos. **No** es la verdad final:
