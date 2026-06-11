@@ -46,3 +46,32 @@ def test_producto_categoria_invalida_422(client):
         "part_number": "PN-BAD", "tipo": "equipo", "descripcion": "x", "categoria": "no_existe",
     })
     assert r.status_code == 422
+
+
+def test_producto_enlaza_fabricante_id(client):
+    fab = client.post("/api/fabricantes", json={"nombre": "National"}).json()
+    r = client.post("/api/productos", json={
+        "part_number": "PN-DMM", "tipo": "componente", "descripcion": "DMM",
+        "fabricante_id": fab["id"],
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["fabricante_id"] == fab["id"]
+
+
+def test_producto_fabricante_id_opcional(client):
+    r = client.post("/api/productos", json={"part_number": "PN-SIN", "tipo": "equipo", "descripcion": "x"})
+    assert r.status_code == 201, r.text
+    assert r.json()["fabricante_id"] is None
+
+
+def test_producto_repunta_fabricante_id_en_update(client):
+    fab = client.post("/api/fabricantes", json={"nombre": "Keysight"}).json()
+    pid = client.post("/api/productos", json={
+        "part_number": "PN-UPD", "tipo": "componente", "descripcion": "Osc",
+    }).json()["id"]
+    r = client.put(f"/api/productos/{pid}", json={
+        "part_number": "PN-UPD", "tipo": "componente", "descripcion": "Osc",
+        "fabricante_id": fab["id"],
+    })
+    assert r.status_code == 200, r.text
+    assert r.json()["fabricante_id"] == fab["id"]

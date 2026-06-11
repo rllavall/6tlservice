@@ -70,6 +70,7 @@ class ProductoCreate(BaseModel):
     tipo: Literal["equipo", "componente"]
     descripcion: str
     fabricante: Optional[str] = None
+    fabricante_id: Optional[int] = None
     modelo: Optional[str] = None
     notas: Optional[str] = None
     meses_garantia_default: Optional[int] = 24
@@ -83,6 +84,7 @@ class ProductoOut(_ORM):
     tipo: str
     descripcion: str
     fabricante: Optional[str] = None
+    fabricante_id: Optional[int] = None
     modelo: Optional[str] = None
     notas: Optional[str] = None
     meses_garantia_default: Optional[int] = None
