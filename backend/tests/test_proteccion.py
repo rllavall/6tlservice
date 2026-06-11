@@ -28,3 +28,28 @@ def test_health_y_login_son_publicos(client_sin_auth):
 def test_client_con_override_no_exige_token(client):
     # el fixture `client` (override activo) deja pasar sin token -> compat de los tests previos
     assert client.get("/api/equipos").status_code == 200
+
+
+def test_fabricantes_sin_token_da_401(client_sin_auth):
+    assert client_sin_auth.get("/api/fabricantes").status_code == 401
+    assert client_sin_auth.post("/api/fabricantes", json={"nombre": "Test"}).status_code == 401
+    assert client_sin_auth.get("/api/fabricantes/1").status_code == 401
+    assert client_sin_auth.put("/api/fabricantes/1", json={"nombre": "Test"}).status_code == 401
+    assert client_sin_auth.delete("/api/fabricantes/1").status_code == 401
+
+
+def test_garantia_fabricante_sin_token_da_401(client_sin_auth):
+    assert client_sin_auth.get("/api/garantias/pendientes").status_code == 401
+    assert client_sin_auth.get("/api/componentes/1/garantia").status_code == 401
+    assert client_sin_auth.post("/api/componentes/1/garantia/activar", json={}).status_code == 401
+    assert client_sin_auth.post(
+        "/api/componentes/1/garantia/confirmar", json={"fecha_activacion": "2026-06-05"}
+    ).status_code == 401
+
+
+def test_derivaciones_sin_token_da_401(client_sin_auth):
+    assert client_sin_auth.get("/api/incidencias/1/derivaciones").status_code == 401
+    assert client_sin_auth.post(
+        "/api/incidencias/1/derivaciones", json={"tipo": "interna_departamento"}
+    ).status_code == 401
+    assert client_sin_auth.patch("/api/derivaciones/1", json={"estado": "enviada"}).status_code == 401
