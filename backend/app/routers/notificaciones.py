@@ -18,5 +18,4 @@ def digest(dry_run: bool = False, db: Session = Depends(get_db)) -> dict:
     if dry_run:
         d = notificaciones_service.construir_digest(db, hoy)
         return {**d, "enviado": False, "canales": None}
-    r = notificaciones_service.enviar_digest(db, hoy)
-    return {**r, "enviado": True}
+    return notificaciones_service.enviar_digest(db, hoy)

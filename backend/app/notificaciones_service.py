@@ -36,8 +36,11 @@ def construir_digest(db: Session, hoy: date) -> dict:
 
 def enviar_digest(db: Session, hoy: date, *, notificar_fn=notificaciones.notificar) -> dict:
     d = construir_digest(db, hoy)
+    if d["total"] == 0:
+        # Nada que reportar: no molestamos con una notificación vacía.
+        return {**d, "canales": {"email": None, "telegram": None}, "enviado": False}
     canales = notificar_fn(d["asunto"], d["cuerpo"])
-    return {**d, "canales": canales}
+    return {**d, "canales": canales, "enviado": True}
 
 
 def mensaje_incidencia(inc, evento: str) -> tuple[str, str]:

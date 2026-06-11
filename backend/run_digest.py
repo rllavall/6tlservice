@@ -32,7 +32,10 @@ def main() -> int:
         else:
             d = notificaciones_service.enviar_digest(db, date.today())
     print(d["asunto"])
-    print(f"total avisos: {d['total']}  canales: {d.get('canales')}")
+    print(
+        f"total avisos: {d['total']}  enviado: {d.get('enviado')}  "
+        f"canales: {d.get('canales')}"
+    )
     return 0
 
 

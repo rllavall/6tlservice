@@ -39,11 +39,26 @@ def test_notificar_incidencia_compone_mensaje():
     assert "en_reparacion" in capt["cuerpo"]
 
 
-def test_enviar_digest_invoca_notificar(db_session):
+def test_enviar_digest_invoca_notificar_si_hay_avisos(db_session):
+    _equipo_contrato_vencido_preventivo(db_session)  # total > 0
     capt = {}
     def fake(asunto, cuerpo):
         capt["llamado"] = True
         return {"email": True, "telegram": None}
     r = notificaciones_service.enviar_digest(db_session, date(2026, 6, 6), notificar_fn=fake)
     assert capt.get("llamado") is True
+    assert r["enviado"] is True
     assert r["canales"] == {"email": True, "telegram": None}
+
+
+def test_enviar_digest_no_envia_si_vacio(db_session):
+    # BD sin avisos -> total 0 -> NO se notifica
+    capt = {"llamado": False}
+    def fake(asunto, cuerpo):
+        capt["llamado"] = True
+        return {"email": True, "telegram": True}
+    r = notificaciones_service.enviar_digest(db_session, date(2026, 6, 6), notificar_fn=fake)
+    assert capt["llamado"] is False
+    assert r["total"] == 0
+    assert r["enviado"] is False
+    assert r["canales"] == {"email": None, "telegram": None}

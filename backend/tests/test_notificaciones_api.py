@@ -1,5 +1,23 @@
 from __future__ import annotations
 
+from datetime import date
+
+from app import models
+
+
+def _seed_aviso(db):
+    """Crea un equipo con contrato vigente + incidencia antigua -> total del digest > 0."""
+    p = models.Producto(part_number="6TL-API", tipo="equipo", descripcion="Banco")
+    db.add(p); db.flush()
+    con = models.ContratoMantenimiento(codigo="CTR-API", nivel="bronze",
+        fecha_inicio=date(2020, 1, 1), fecha_fin=date(2100, 1, 1))
+    db.add(con); db.flush()
+    eq = models.Equipo(numero_serie="API1", producto_id=p.id, contrato_id=con.id)
+    db.add(eq); db.flush()
+    inc = models.Incidencia(codigo="RMA-API", tipo="rma", estado="abierta", equipo_id=eq.id,
+        titulo="t", descripcion_problema="d", prioridad="media", fecha_apertura=date(2020, 1, 1))
+    db.add(inc); db.commit()
+
 
 def test_digest_dry_run_no_envia(client):
     out = client.post("/api/notificaciones/digest?dry_run=true").json()
@@ -11,11 +29,20 @@ def test_digest_dry_run_no_envia(client):
         "sla_en_riesgo", "sla_incumplidas"}
 
 
-def test_digest_envia_sin_canales(client, monkeypatch):
+def test_digest_envia_sin_canales(client, db_session, monkeypatch):
     for var in ("SMTP_HOST", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"):
         monkeypatch.delenv(var, raising=False)
+    _seed_aviso(db_session)  # hay avisos -> sí envía (aunque sin canales configurados)
     out = client.post("/api/notificaciones/digest").json()
     assert out["enviado"] is True
+    assert out["canales"] == {"email": None, "telegram": None}
+
+
+def test_digest_no_envia_si_vacio(client):
+    # BD sin avisos -> total 0 -> no se envía nada
+    out = client.post("/api/notificaciones/digest").json()
+    assert out["total"] == 0
+    assert out["enviado"] is False
     assert out["canales"] == {"email": None, "telegram": None}
 
 
