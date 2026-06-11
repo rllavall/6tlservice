@@ -174,6 +174,12 @@ class ComponenteCreate(BaseModel):
     notas: Optional[str] = None
 
 
+class ComponenteUpdate(BaseModel):
+    numero_serie: Optional[str] = None
+    posicion: Optional[str] = None
+    notas: Optional[str] = None
+
+
 class ComponenteOut(_ORM):
     id: int
     numero_serie: str

@@ -31,6 +31,34 @@ def test_componente_list_and_update(client, prod_componente):
     assert r.json()["notas"] == "ok"
 
 
+def test_patch_componente_actualiza_serie_sin_desmontar(client, prod_componente, prod_equipo):
+    eq = client.post("/api/equipos", json={"numero_serie": "SN-P", "producto_id": prod_equipo}).json()
+    comp = client.post("/api/componentes", json={
+        "numero_serie": "S/N pendiente (10)", "producto_id": prod_componente,
+        "equipo_id": eq["id"], "posicion": "10", "fecha_montaje": "2026-06-01",
+    }).json()
+    r = client.patch(f"/api/componentes/{comp['id']}", json={"numero_serie": "REAL-12345"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["numero_serie"] == "REAL-12345"
+    # sigue montado y conserva el resto de datos (no se desmonta)
+    assert body["equipo_id"] == eq["id"]
+    assert body["posicion"] == "10"
+    assert body["fecha_montaje"] == "2026-06-01"
+
+
+def test_patch_componente_serie_duplicada_409(client, prod_componente):
+    client.post("/api/componentes", json={"numero_serie": "A", "producto_id": prod_componente})
+    c2 = client.post("/api/componentes", json={"numero_serie": "B", "producto_id": prod_componente}).json()
+    r = client.patch(f"/api/componentes/{c2['id']}", json={"numero_serie": "A"})
+    assert r.status_code == 409
+
+
+def test_patch_componente_404(client):
+    r = client.patch("/api/componentes/99999", json={"numero_serie": "X"})
+    assert r.status_code == 404
+
+
 def test_componente_expone_categoria_del_producto(client):
     p = client.post("/api/productos", json={
         "part_number": "PN-YAV", "tipo": "componente", "descripcion": "Modulo YAV", "categoria": "yav_module",

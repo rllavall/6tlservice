@@ -47,6 +47,10 @@ def test_garantia_fabricante_sin_token_da_401(client_sin_auth):
     ).status_code == 401
 
 
+def test_patch_componente_sin_token_da_401(client_sin_auth):
+    assert client_sin_auth.patch("/api/componentes/1", json={"numero_serie": "X"}).status_code == 401
+
+
 def test_derivaciones_sin_token_da_401(client_sin_auth):
     assert client_sin_auth.get("/api/incidencias/1/derivaciones").status_code == 401
     assert client_sin_auth.post(

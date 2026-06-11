@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.db import get_db
-from app.schemas import ComponenteCreate, ComponenteOut
+from app.schemas import ComponenteCreate, ComponenteOut, ComponenteUpdate
 
 router = APIRouter(prefix="/api/componentes", tags=["componentes"])
 
@@ -52,6 +52,26 @@ def crear(payload: ComponenteCreate, db: Session = Depends(get_db)) -> models.Co
         raise HTTPException(404, "Equipo no encontrado")
     c = models.Componente(**payload.model_dump())
     db.add(c)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "Ya existe un componente con ese (producto, numero_serie)")
+    db.refresh(c)
+    return c
+
+
+@router.patch("/{componente_id}", response_model=ComponenteOut)
+def actualizar_parcial(
+    componente_id: int, payload: ComponenteUpdate, db: Session = Depends(get_db)
+) -> models.Componente:
+    """Edita campos sueltos del componente (p. ej. el número de serie real) sin
+    tocar el montaje: solo aplica los campos enviados (exclude_unset)."""
+    c = db.get(models.Componente, componente_id)
+    if c is None:
+        raise HTTPException(404, "Componente no encontrado")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(c, k, v)
     try:
         db.commit()
     except IntegrityError:
