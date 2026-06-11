@@ -14,10 +14,16 @@ router = APIRouter(prefix="/api/productos", tags=["productos"])
 
 
 @router.get("", response_model=list[ProductoOut])
-def listar(tipo: Optional[str] = None, db: Session = Depends(get_db)) -> list[models.Producto]:
+def listar(
+    tipo: Optional[str] = None,
+    categoria_componente: Optional[str] = None,
+    db: Session = Depends(get_db),
+) -> list[models.Producto]:
     q = db.query(models.Producto)
     if tipo is not None:
         q = q.filter(models.Producto.tipo == tipo)
+    if categoria_componente is not None:
+        q = q.filter(models.Producto.categoria_componente == categoria_componente)
     return q.order_by(models.Producto.part_number).all()
 
 

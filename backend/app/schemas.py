@@ -63,6 +63,7 @@ class UbicacionOut(_ORM):
 
 # --- Producto ---
 _CATEGORIA = Literal["ate", "yav_module", "fastate_module", "test_fixture", "test_handler", "otro"]
+_CATEGORIA_COMPONENTE = Literal["instrumento", "mass_interconnect", "wiring", "accesorios"]
 
 
 class ProductoCreate(BaseModel):
@@ -76,6 +77,7 @@ class ProductoCreate(BaseModel):
     meses_garantia_default: Optional[int] = 24
     categoria: Optional[_CATEGORIA] = None
     pn_fabricante: Optional[str] = None
+    categoria_componente: Optional[_CATEGORIA_COMPONENTE] = None
 
 
 class ProductoOut(_ORM):
@@ -90,6 +92,7 @@ class ProductoOut(_ORM):
     meses_garantia_default: Optional[int] = None
     categoria: Optional[str] = None
     pn_fabricante: Optional[str] = None
+    categoria_componente: Optional[str] = None
 
 
 # --- Equipo ---
@@ -180,6 +183,7 @@ class ComponenteOut(_ORM):
     fecha_montaje: Optional[date] = None
     notas: Optional[str] = None
     categoria: Optional[str] = None
+    categoria_componente: Optional[str] = None
 
 
 # --- Movimiento ---

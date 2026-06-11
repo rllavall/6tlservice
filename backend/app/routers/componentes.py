@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/componentes", tags=["componentes"])
 def listar(
     equipo_id: Optional[int] = None,
     producto_id: Optional[int] = None,
+    categoria_componente: Optional[str] = None,
     db: Session = Depends(get_db),
 ) -> list[models.Componente]:
     q = db.query(models.Componente)
@@ -24,6 +25,11 @@ def listar(
         q = q.filter(models.Componente.equipo_id == equipo_id)
     if producto_id is not None:
         q = q.filter(models.Componente.producto_id == producto_id)
+    if categoria_componente is not None:
+        sub = db.query(models.Producto.id).filter(
+            models.Producto.categoria_componente == categoria_componente
+        )
+        q = q.filter(models.Componente.producto_id.in_(sub))
     return q.order_by(models.Componente.numero_serie).all()
 
 

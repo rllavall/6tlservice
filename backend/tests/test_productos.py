@@ -75,3 +75,43 @@ def test_producto_repunta_fabricante_id_en_update(client):
     })
     assert r.status_code == 200, r.text
     assert r.json()["fabricante_id"] == fab["id"]
+
+
+def test_producto_acepta_y_devuelve_categoria_componente(client):
+    r = client.post("/api/productos", json={
+        "part_number": "KS-34470A", "tipo": "componente", "descripcion": "DMM",
+        "categoria_componente": "instrumento",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["categoria_componente"] == "instrumento"
+
+
+def test_producto_categoria_componente_opcional(client):
+    r = client.post("/api/productos", json={
+        "part_number": "CC-NC", "tipo": "componente", "descripcion": "x",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["categoria_componente"] is None
+
+
+def test_producto_categoria_componente_invalida_422(client):
+    r = client.post("/api/productos", json={
+        "part_number": "CC-BAD", "tipo": "componente", "descripcion": "x",
+        "categoria_componente": "no_existe",
+    })
+    assert r.status_code == 422
+
+
+def test_productos_filtra_por_categoria_componente(client):
+    client.post("/api/productos", json={
+        "part_number": "INS-1", "tipo": "componente", "descripcion": "DMM",
+        "categoria_componente": "instrumento",
+    })
+    client.post("/api/productos", json={
+        "part_number": "WIR-1", "tipo": "componente", "descripcion": "Cable",
+        "categoria_componente": "wiring",
+    })
+    r = client.get("/api/productos?categoria_componente=instrumento")
+    assert r.status_code == 200
+    pns = {p["part_number"] for p in r.json()}
+    assert pns == {"INS-1"}

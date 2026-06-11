@@ -64,6 +64,7 @@ class Producto(Base):
     categoria: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     pn_fabricante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     fabricante_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fabricantes.id"), nullable=True)
+    categoria_componente: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
 
 class Equipo(Base):
@@ -127,6 +128,10 @@ class Componente(Base):
     @property
     def categoria(self):
         return self.producto.categoria if self.producto is not None else None
+
+    @property
+    def categoria_componente(self):
+        return self.producto.categoria_componente if self.producto is not None else None
 
 
 class Movimiento(Base):
