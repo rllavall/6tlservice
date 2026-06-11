@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import derivaciones_service as svc
@@ -36,20 +37,34 @@ def listar(incidencia_id: int, db: Session = Depends(get_db)) -> list[models.Der
 def crear(incidencia_id: int, payload: DerivacionCreate,
           db: Session = Depends(get_db)) -> models.Derivacion:
     inc = _incidencia_o_404(db, incidencia_id)
-    try:
-        d = svc.crear(db, inc, tipo=payload.tipo, fabricante_id=payload.fabricante_id,
-                      departamento=payload.departamento)
-    except svc.DerivacionError as e:
-        db.rollback()
-        raise HTTPException(409, str(e))
-    if payload.notas is not None:
-        d.notas = payload.notas
+    # `tu_referencia` (RMA-NNNN) se calcula con max+1 y la constraint UNIQUE es el
+    # árbitro: si dos altas concurrentes colisionan, el commit perdedor lanza
+    # IntegrityError. Reintentamos un par de veces con una referencia fresca antes
+    # de rendirnos con un 409 (en vez de propagar un 500).
+    d = None
+    for _ in range(3):
+        try:
+            d = svc.crear(db, inc, tipo=payload.tipo, fabricante_id=payload.fabricante_id,
+                          departamento=payload.departamento)
+            if payload.notas is not None:
+                d.notas = payload.notas
+            db.commit()
+            break
+        except svc.DerivacionError as e:
+            db.rollback()
+            raise HTTPException(409, str(e))
+        except IntegrityError:
+            # Colisión de tu_referencia (flush o commit): reintenta con otra.
+            db.rollback()
+            d = None
+    if d is None:
+        raise HTTPException(409, "No se pudo asignar una referencia RMA única; reinténtalo")
+    db.refresh(d)
+    # Email best-effort tras persistir (evita doble envío si hubo reintento).
     if d.tipo == "externa_fabricante" and d.fabricante_id is not None:
         fabricante = db.get(models.Fabricante, d.fabricante_id)
         if fabricante is not None and fab.destino_rma(fabricante):
             fabricantes_email.enviar_rma(d, fabricante)
-    db.commit()
-    db.refresh(d)
     return d
 
 

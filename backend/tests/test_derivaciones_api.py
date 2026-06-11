@@ -47,3 +47,32 @@ def test_transicion_invalida_da_409(client, db_session):
                     json={"tipo": "externa_fabricante", "fabricante_id": fab["id"]}).json()
     r = client.patch(f"/api/derivaciones/{d['id']}", json={"estado": "cerrada"})
     assert r.status_code == 409
+
+
+def test_crear_reintenta_si_referencia_colisiona(client, db_session, monkeypatch):
+    # Simula la carrera: dos POST calculan el mismo RMA-NNNN. El primero gana
+    # la constraint UNIQUE; el segundo debe reintentar con una referencia fresca,
+    # no devolver un 500 por IntegrityError sin gestionar.
+    inc_id = _incidencia(db_session)
+    fab = client.post("/api/fabricantes", json={"nombre": "NI"}).json()
+    d1 = client.post(f"/api/incidencias/{inc_id}/derivaciones",
+                     json={"tipo": "externa_fabricante", "fabricante_id": fab["id"]}).json()
+    assert d1["tu_referencia"] == "RMA-0001"
+
+    from app import derivaciones_service
+    real = derivaciones_service.generar_referencia
+    llamadas = {"n": 0}
+
+    def _colisiona_una_vez(db):
+        llamadas["n"] += 1
+        if llamadas["n"] == 1:
+            return "RMA-0001"  # ya existe -> fuerza IntegrityError
+        return real(db)
+
+    monkeypatch.setattr(derivaciones_service, "generar_referencia", _colisiona_una_vez)
+
+    r = client.post(f"/api/incidencias/{inc_id}/derivaciones",
+                    json={"tipo": "externa_fabricante", "fabricante_id": fab["id"]})
+    assert r.status_code == 201, r.text
+    assert r.json()["tu_referencia"] != "RMA-0001"  # reintentó y obtuvo otra
+    assert llamadas["n"] >= 2  # hubo reintento
