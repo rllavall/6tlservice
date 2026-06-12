@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from app import models, obsolescencia_banco, obsolescencia_export
@@ -45,7 +45,7 @@ def exportar(equipo_id: int, formato: str = "xlsx", db: Session = Depends(get_db
 
 
 @router.post("/{equipo_id}/obsolescencia/refrescar", response_model=ObsolescenciaBancoOut)
-def refrescar(equipo_id: int, limite: int = 10, db: Session = Depends(get_db),
+def refrescar(equipo_id: int, limite: int = Query(default=10, ge=1, le=50), db: Session = Depends(get_db),
               consultar=Depends(get_consultar_fabricante)):
     _equipo_o_404(db, equipo_id)
     return obsolescencia_banco.refrescar_banco(

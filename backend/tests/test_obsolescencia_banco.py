@@ -58,10 +58,8 @@ def test_productos_de_equipo_solo_verificables_no_verificados_primero(db_session
 
 def test_refrescar_banco_registra_estado_crea_noticia_y_respeta_limite(db_session):
     eq_id = _seed_banco(db_session)
-    llamados = []
 
     def fake_consultar(producto, url):
-        llamados.append(producto.part_number)
         # empeora P-ACT (activo -> obsoleto); el resto sin cambio concluyente
         if producto.part_number == "P-ACT":
             return {"estado": "obsoleto", "fecha_evento": None,
