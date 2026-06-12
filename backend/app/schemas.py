@@ -64,6 +64,7 @@ class UbicacionOut(_ORM):
 # --- Producto ---
 _CATEGORIA = Literal["ate", "yav_module", "fastate_module", "test_fixture", "test_handler", "otro"]
 _CATEGORIA_COMPONENTE = Literal["instrumento", "mass_interconnect", "wiring", "accesorios"]
+_ESTADO_CICLO = Literal["activo", "nrnd", "eol_anunciado", "ultima_compra", "obsoleto"]
 
 
 class ProductoCreate(BaseModel):
@@ -93,6 +94,11 @@ class ProductoOut(_ORM):
     categoria: Optional[str] = None
     pn_fabricante: Optional[str] = None
     categoria_componente: Optional[str] = None
+    estado_ciclo_vida: Optional[str] = None
+    ciclo_vida_fecha: Optional[date] = None
+    ciclo_vida_url: Optional[str] = None
+    ciclo_vida_resumen: Optional[str] = None
+    ciclo_vida_verificado_en: Optional[date] = None
 
 
 # --- Equipo ---
@@ -778,6 +784,7 @@ class FabricanteCreate(BaseModel):
     requiere_activacion_web: bool = False
     politica_rma: Optional[str] = None
     notas: Optional[str] = None
+    url_obsolescencia: Optional[str] = None
 
 
 class FabricanteUpdate(BaseModel):
@@ -788,6 +795,7 @@ class FabricanteUpdate(BaseModel):
     requiere_activacion_web: Optional[bool] = None
     politica_rma: Optional[str] = None
     notas: Optional[str] = None
+    url_obsolescencia: Optional[str] = None
 
 
 class FabricanteOut(BaseModel):
@@ -800,6 +808,7 @@ class FabricanteOut(BaseModel):
     requiere_activacion_web: bool
     politica_rma: Optional[str] = None
     notas: Optional[str] = None
+    url_obsolescencia: Optional[str] = None
 
 
 class GarantiaActivarPayload(BaseModel):
@@ -854,3 +863,39 @@ class DerivacionOut(BaseModel):
     fecha_envio: Optional[date] = None
     fecha_cierre: Optional[date] = None
     notas: Optional[str] = None
+
+
+# --- Obsolescencia ---
+class HallazgoObsolescencia(BaseModel):
+    producto_id: int
+    estado: _ESTADO_CICLO
+    fecha_evento: Optional[date] = None
+    url: Optional[str] = None
+    resumen: Optional[str] = None
+
+
+class ProductoARevisarOut(BaseModel):
+    id: int
+    fabricante: Optional[str] = None
+    pn_fabricante: Optional[str] = None
+    descripcion: str
+    estado_ciclo_vida: Optional[str] = None
+    url_obsolescencia: Optional[str] = None
+
+
+class NoticiaObsolescenciaOut(_ORM):
+    id: int
+    producto_id: int
+    fecha_deteccion: date
+    estado_anterior: Optional[str] = None
+    estado_nuevo: str
+    fecha_evento: Optional[date] = None
+    url_fuente: Optional[str] = None
+    resumen: Optional[str] = None
+    notificado: bool
+
+
+class ObsolescenciaResumenOut(BaseModel):
+    conteos: dict[str, int]
+    sin_verificar: int
+    noticias: list[NoticiaObsolescenciaOut] = Field(default_factory=list)
