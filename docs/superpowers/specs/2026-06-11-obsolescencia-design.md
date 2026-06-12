@@ -62,10 +62,12 @@ Migración: columnas vía `migrations.add_missing_columns`; tabla nueva vía `cr
 - `registrar_hallazgo(db, producto_id, estado, *, hoy, fecha_evento=None, url=None, resumen=None)`:
   - Valida con `obsolescencia.validar_hallazgo`. Si falla la regla de URL → no registra, devuelve
     `{"registrado": False, "motivo": "sin_url"}` (no rompe el lote).
-  - Siempre actualiza `ciclo_vida_verificado_en = hoy`.
-  - Si `estado` difiere del `estado_ciclo_vida` actual → crea `NoticiaObsolescencia` (con
-    `estado_anterior`/`estado_nuevo`) y actualiza los campos del producto. Devuelve `cambio=True`.
-  - Si no cambia → solo persiste `verificado_en`. Devuelve `cambio=False`.
+  - Siempre actualiza `ciclo_vida_verificado_en = hoy` y `estado_ciclo_vida = estado` (último
+    veredicto), junto con `ciclo_vida_fecha/url/resumen`.
+  - Crea `NoticiaObsolescencia` (con `estado_anterior`/`estado_nuevo`) **solo si es un cambio
+    notable**: el estado empeora respecto al anterior (mayor severidad). Así `sin verificar → activo`
+    no genera noticia (evita inundar en la primera pasada) y un estado que se mantiene no duplica.
+    Devuelve `cambio=True` si creó noticia, `False` si no.
 - `resumen_obsolescencia(db)` — conteos por estado + últimas noticias (para la UI).
 - `enviar_informe(db, hoy, *, notificar_fn=notificaciones.notificar)` — junta las
   `NoticiaObsolescencia` con `notificado=False`, construye asunto/cuerpo, **envía solo si hay
