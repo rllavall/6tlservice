@@ -65,6 +65,11 @@ class Producto(Base):
     pn_fabricante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     fabricante_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fabricantes.id"), nullable=True)
     categoria_componente: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    estado_ciclo_vida: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    ciclo_vida_fecha: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    ciclo_vida_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    ciclo_vida_resumen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    ciclo_vida_verificado_en: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
 
 class Equipo(Base):
@@ -327,6 +332,7 @@ class Fabricante(Base):
     requiere_activacion_web: Mapped[bool] = mapped_column(Boolean, default=False)
     politica_rma: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    url_obsolescencia: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 class GarantiaFabricante(Base):
@@ -370,3 +376,17 @@ class Derivacion(Base):
     fecha_envio: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     fecha_cierre: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+class NoticiaObsolescencia(Base):
+    __tablename__ = "noticias_obsolescencia"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"))
+    fecha_deteccion: Mapped[date] = mapped_column(Date)
+    estado_anterior: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    estado_nuevo: Mapped[str] = mapped_column(String)
+    fecha_evento: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    url_fuente: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resumen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notificado: Mapped[bool] = mapped_column(Boolean, default=False)
