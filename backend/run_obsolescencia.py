@@ -12,9 +12,12 @@ Uso:
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
 from datetime import date
+from pathlib import Path
 
 from app.env_file import load_env_file
 
@@ -22,6 +25,20 @@ load_env_file()
 
 from app.db import SessionLocal
 from app import models, obsolescencia_service, notificaciones  # noqa: F401
+
+
+def _claude_bin() -> str:
+    """Resuelve el ejecutable de Claude Code headless. Orden: env CLAUDE_BIN ->
+    PATH (`which`) -> instalación nativa en ~/.local/bin. El Programador de tareas
+    no hereda el PATH del usuario, por eso no basta con 'claude' a secas."""
+    env = os.environ.get("CLAUDE_BIN")
+    if env and Path(env).exists():
+        return env
+    enpath = shutil.which("claude")
+    if enpath:
+        return enpath
+    nativo = Path.home() / ".local" / "bin" / ("claude.exe" if os.name == "nt" else "claude")
+    return str(nativo)
 
 
 def _url_fabricante(db, producto) -> str | None:
@@ -35,8 +52,6 @@ def consultar_fabricante(producto, url_obsolescencia):
     """Lanza Claude Code headless para investigar el estado de ciclo de vida.
 
     Devuelve {estado, fecha_evento, url_fuente, resumen} o None si no concluyente."""
-    from pathlib import Path
-
     plantilla = (Path(__file__).with_name("obsolescencia_prompt.md")).read_text(encoding="utf-8")
     prompt = plantilla.format(
         fabricante=producto.fabricante or "",
@@ -45,9 +60,12 @@ def consultar_fabricante(producto, url_obsolescencia):
         url=url_obsolescencia or "(sin URL conocida; busca en abierto)",
     )
     try:
+        # --allowedTools concede WebSearch/WebFetch sin prompt interactivo (en
+        # headless el modo 'default' auto-deniega y el agente se queda sin web).
         out = subprocess.run(
-            ["claude", "-p", prompt],
-            capture_output=True, text=True, timeout=180, check=True,
+            [_claude_bin(), "--allowedTools", "WebSearch,WebFetch", "-p", prompt],
+            capture_output=True, text=True, timeout=300, check=True,
+            stdin=subprocess.DEVNULL,
         ).stdout.strip()
         inicio, fin = out.find("{"), out.rfind("}")
         if inicio == -1 or fin == -1:
