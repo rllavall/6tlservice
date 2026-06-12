@@ -45,3 +45,48 @@ def test_informe_banco_ordena_por_severidad_y_resume(db_session):
     assert inf["resumen"]["sin_verificar"] == 1
     assert inf["resumen"]["conteos"]["obsoleto"] == 1
     assert inf["resumen"]["verificado_mas_antiguo"] == date(2026, 1, 1)
+
+
+def test_productos_de_equipo_solo_verificables_no_verificados_primero(db_session):
+    eq_id = _seed_banco(db_session)
+    prods = obsolescencia_banco.productos_de_equipo(db_session, eq_id)
+    pns = [p.part_number for p in prods]
+    # P-NV no tiene fabricante/pn -> excluido; P-ACT está verificado, P-OBS también
+    assert "P-NV" not in pns
+    assert set(pns) == {"P-OBS", "P-ACT"}
+
+
+def test_refrescar_banco_registra_estado_crea_noticia_y_respeta_limite(db_session):
+    eq_id = _seed_banco(db_session)
+    llamados = []
+
+    def fake_consultar(producto, url):
+        llamados.append(producto.part_number)
+        # empeora P-ACT (activo -> obsoleto); el resto sin cambio concluyente
+        if producto.part_number == "P-ACT":
+            return {"estado": "obsoleto", "fecha_evento": None,
+                    "url_fuente": "http://beta/eol", "resumen": "EOL"}
+        return None
+
+    inf = obsolescencia_banco.refrescar_banco(
+        db_session, eq_id, date(2026, 6, 12), limite=10, consultar=fake_consultar)
+
+    # P-ACT quedó obsoleto y generó noticia (empeora)
+    p_act = db_session.query(models.Producto).filter_by(part_number="P-ACT").one()
+    assert p_act.estado_ciclo_vida == "obsoleto"
+    noticias = db_session.query(models.NoticiaObsolescencia).filter_by(producto_id=p_act.id).all()
+    assert len(noticias) == 1
+    assert inf["resumen"]["total"] == 3
+
+
+def test_refrescar_banco_respeta_limite(db_session):
+    eq_id = _seed_banco(db_session)
+    llamados = []
+
+    def fake_consultar(producto, url):
+        llamados.append(producto.part_number)
+        return None
+
+    obsolescencia_banco.refrescar_banco(
+        db_session, eq_id, date(2026, 6, 12), limite=1, consultar=fake_consultar)
+    assert len(llamados) == 1

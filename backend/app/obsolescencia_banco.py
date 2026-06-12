@@ -82,3 +82,38 @@ def informe_banco(db: Session, equipo_id: int, hoy: date) -> dict:
             "verificado_mas_antiguo": min(verificados) if verificados else None,
         },
     }
+
+
+def productos_de_equipo(db: Session, equipo_id: int) -> list[models.Producto]:
+    """Productos distintos de los componentes del banco con fabricante+pn_fabricante
+    (verificables). No verificados primero, luego por verificado_en ascendente."""
+    equipo = db.get(models.Equipo, equipo_id)
+    if equipo is None:
+        return []
+    vistos: dict[int, models.Producto] = {}
+    for comp in equipo.componentes:
+        p = comp.producto
+        if p.fabricante and p.pn_fabricante and p.id not in vistos:
+            vistos[p.id] = p
+    prods = list(vistos.values())
+    prods.sort(key=lambda p: (p.ciclo_vida_verificado_en is not None,
+                              p.ciclo_vida_verificado_en or date.min))
+    return prods
+
+
+def refrescar_banco(db: Session, equipo_id: int, hoy: date, *,
+                    limite: int = 10, consultar) -> dict:
+    """Re-verifica hasta `limite` productos del banco vía `consultar` (inyectable),
+    registra los hallazgos y devuelve el report actualizado. Best-effort: un
+    `consultar` que devuelve None o falla no rompe el refresco."""
+    for p in productos_de_equipo(db, equipo_id)[:limite]:
+        try:
+            v = consultar(p, _url_fabricante(db, p))
+        except Exception:
+            v = None
+        if not v:
+            continue
+        obsolescencia_service.registrar_hallazgo(
+            db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
+            url=v.get("url_fuente"), resumen=v.get("resumen"))
+    return informe_banco(db, equipo_id, hoy)
