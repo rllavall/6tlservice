@@ -90,3 +90,52 @@ def test_refrescar_usa_consultar_inyectado(client, db_session):
     p = db_session.query(models.Producto).filter_by(part_number="P-ACT").one()
     db_session.refresh(p)
     assert p.estado_ciclo_vida == "obsoleto"
+
+
+def test_refrescar_iniciar_y_progreso(client, db_session, memory_engine, monkeypatch):
+    from sqlalchemy.orm import sessionmaker
+    from app import obsolescencia_jobs
+
+    eq_id = _seed(db_session)  # 1 componente verificable (P-ACT, activo)
+    Factory = sessionmaker(bind=memory_engine, autoflush=False, expire_on_commit=False)
+
+    # consultar inyectado (sin red) + lanzar inline (sin hilo) usando el motor de test
+    app.dependency_overrides[get_consultar_fabricante] = lambda: (
+        lambda p, url: {"estado": "obsoleto", "fecha_evento": None,
+                        "url_fuente": "http://b/eol", "resumen": "x"})
+    monkeypatch.setattr(
+        obsolescencia_jobs, "lanzar",
+        lambda job_id, equipo_id, **kw: obsolescencia_jobs.ejecutar(
+            job_id, equipo_id, db_factory=Factory, **kw))
+    try:
+        r = client.post(f"/api/equipos/{eq_id}/obsolescencia/refrescar/iniciar?limite=5")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["total"] == 1 and body["job_id"]
+
+        g = client.get(f"/api/equipos/{eq_id}/obsolescencia/refrescar/{body['job_id']}")
+        assert g.status_code == 200
+        prog = g.json()
+        assert prog["estado"] == "terminado"
+        assert prog["indice"] == 1
+        assert prog["resultados"][0]["estado_nuevo"] == "obsoleto"
+        assert prog["report"]["resumen"]["total"] == 1
+    finally:
+        app.dependency_overrides.pop(get_consultar_fabricante, None)
+
+
+def test_refrescar_iniciar_equipo_inexistente_404(client):
+    app.dependency_overrides[get_consultar_fabricante] = lambda: (lambda p, url: None)
+    try:
+        r = client.post("/api/equipos/9999/obsolescencia/refrescar/iniciar")
+        assert r.status_code == 404
+    finally:
+        app.dependency_overrides.pop(get_consultar_fabricante, None)
+
+
+def test_refrescar_progreso_job_desconocido_404(client):
+    assert client.get("/api/equipos/1/obsolescencia/refrescar/nope").status_code == 404
+
+
+def test_refrescar_progreso_requiere_auth(client_sin_auth):
+    assert client_sin_auth.get("/api/equipos/1/obsolescencia/refrescar/x").status_code == 401

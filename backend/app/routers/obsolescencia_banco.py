@@ -5,10 +5,10 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
-from app import models, obsolescencia_banco, obsolescencia_export
+from app import models, obsolescencia_banco, obsolescencia_export, obsolescencia_jobs
 from app.db import get_db
 from app.deps import get_consultar_fabricante
-from app.schemas import ObsolescenciaBancoOut
+from app.schemas import ObsolescenciaBancoOut, RefrescoIniciado, RefrescoProgreso
 
 router = APIRouter(prefix="/api/equipos", tags=["obsolescencia"])
 
@@ -50,3 +50,22 @@ def refrescar(equipo_id: int, limite: int = Query(default=10, ge=1, le=50), db: 
     _equipo_o_404(db, equipo_id)
     return obsolescencia_banco.refrescar_banco(
         db, equipo_id, date.today(), limite=limite, consultar=consultar)
+
+
+@router.post("/{equipo_id}/obsolescencia/refrescar/iniciar", response_model=RefrescoIniciado)
+def refrescar_iniciar(equipo_id: int, limite: int = Query(default=10, ge=1, le=50),
+                      db: Session = Depends(get_db),
+                      consultar=Depends(get_consultar_fabricante)):
+    _equipo_o_404(db, equipo_id)
+    total = len(obsolescencia_banco.productos_de_equipo(db, equipo_id)[:limite])
+    job_id = obsolescencia_jobs.crear_job(equipo_id, total)
+    obsolescencia_jobs.lanzar(job_id, equipo_id, limite=limite, consultar=consultar)
+    return {"job_id": job_id, "total": total}
+
+
+@router.get("/{equipo_id}/obsolescencia/refrescar/{job_id}", response_model=RefrescoProgreso)
+def refrescar_progreso(equipo_id: int, job_id: str):
+    snap = obsolescencia_jobs.snapshot(job_id)
+    if snap is None or snap["equipo_id"] != equipo_id:
+        raise HTTPException(status_code=404, detail="job no encontrado")
+    return snap
