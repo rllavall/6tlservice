@@ -60,3 +60,21 @@ def test_transicion_incidencia_sigue_funcionando(client):
     r = client.post(f"/api/incidencias/{inc['id']}/transicion", json={"nuevo_estado": "diagnostico"})
     assert r.status_code == 200
     assert r.json()["estado"] == "diagnostico"
+
+
+def test_transicion_no_dispara_notificacion(client, monkeypatch):
+    """Una transición de incidencia NO debe enviar notificación (evita floods por
+    operaciones masivas/seed). Las notificaciones quedan solo en el digest diario."""
+    from app import notificaciones_service
+    llamadas = {"n": 0}
+    monkeypatch.setattr(notificaciones_service, "notificar_incidencia",
+                        lambda *a, **k: llamadas.__setitem__("n", llamadas["n"] + 1))
+    prod = client.post("/api/productos", json={
+        "part_number": "6TL-NN", "tipo": "equipo", "descripcion": "B"}).json()
+    eq = client.post("/api/equipos", json={"numero_serie": "NN1", "producto_id": prod["id"]}).json()
+    inc = client.post("/api/incidencias", json={
+        "tipo": "soporte_tecnico", "equipo_id": eq["id"], "titulo": "x",
+        "descripcion_problema": "y", "prioridad": "media", "fecha_apertura": "2026-06-01"}).json()
+    r = client.post(f"/api/incidencias/{inc['id']}/transicion", json={"nuevo_estado": "diagnostico"})
+    assert r.status_code == 200
+    assert llamadas["n"] == 0
