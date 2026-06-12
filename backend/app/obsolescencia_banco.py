@@ -102,18 +102,33 @@ def productos_de_equipo(db: Session, equipo_id: int) -> list[models.Producto]:
 
 
 def refrescar_banco(db: Session, equipo_id: int, hoy: date, *,
-                    limite: int = 10, consultar) -> dict:
+                    limite: int = 10, consultar, on_progreso=None) -> dict:
     """Re-verifica hasta `limite` productos del banco vía `consultar` (inyectable),
     registra los hallazgos y devuelve el report actualizado. Best-effort: un
-    `consultar` que devuelve None o falla no rompe el refresco."""
-    for p in productos_de_equipo(db, equipo_id)[:limite]:
+    `consultar` que devuelve None o falla no rompe el refresco.
+
+    Si se pasa `on_progreso`, se invoca con un dict por evento:
+    `{"tipo":"actual","indice","total","producto"}` antes de consultar cada
+    producto, y `{"tipo":"resultado","indice","total","producto",
+    "estado_anterior","estado_nuevo","cambio"}` después de registrar."""
+    prods = productos_de_equipo(db, equipo_id)[:limite]
+    total = len(prods)
+    for i, p in enumerate(prods, start=1):
+        if on_progreso is not None:
+            on_progreso({"tipo": "actual", "indice": i, "total": total, "producto": p})
+        anterior = p.estado_ciclo_vida
         try:
             v = consultar(p, _url_fabricante(db, p))
         except Exception:
             v = None
-        if not v:
-            continue
-        obsolescencia_service.registrar_hallazgo(
-            db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
-            url=v.get("url_fuente"), resumen=v.get("resumen"))
+        cambio = False
+        if v:
+            res = obsolescencia_service.registrar_hallazgo(
+                db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
+                url=v.get("url_fuente"), resumen=v.get("resumen"))
+            cambio = bool(res.get("cambio"))
+        if on_progreso is not None:
+            on_progreso({"tipo": "resultado", "indice": i, "total": total, "producto": p,
+                         "estado_anterior": anterior, "estado_nuevo": p.estado_ciclo_vida,
+                         "cambio": cambio})
     return informe_banco(db, equipo_id, hoy)
