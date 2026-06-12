@@ -105,6 +105,9 @@ app.include_router(fabricantes.router, dependencies=[Depends(get_current_user)])
 from app.routers import obsolescencia
 app.include_router(obsolescencia.router, dependencies=[Depends(get_current_user)])
 
+from app.routers import obsolescencia_banco
+app.include_router(obsolescencia_banco.router, dependencies=[Depends(get_current_user)])
+
 from app.routers import garantia_fabricante
 app.include_router(garantia_fabricante.router, dependencies=[Depends(get_current_user)])
 

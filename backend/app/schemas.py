@@ -899,3 +899,45 @@ class ObsolescenciaResumenOut(BaseModel):
     conteos: dict[str, int]
     sin_verificar: int
     noticias: list[NoticiaObsolescenciaOut] = Field(default_factory=list)
+
+
+# --- Report de obsolescencia por banco ---
+class ObsolescenciaBancoCabecera(BaseModel):
+    equipo_id: int
+    numero_serie: str
+    producto: str
+    descripcion: Optional[str] = None
+    cliente: Optional[str] = None
+    estado: str
+    contrato_nivel: Optional[str] = None
+
+
+class ObsolescenciaBancoComponenteOut(BaseModel):
+    componente_id: int
+    posicion: Optional[str] = None
+    part_number: str
+    fabricante: Optional[str] = None
+    pn_fabricante: Optional[str] = None
+    descripcion: str
+    numero_serie: str
+    categoria_componente: Optional[str] = None
+    estado_ciclo_vida: Optional[str] = None
+    severidad: int
+    ciclo_vida_fecha: Optional[date] = None
+    ciclo_vida_url: Optional[str] = None
+    ciclo_vida_resumen: Optional[str] = None
+    ciclo_vida_verificado_en: Optional[date] = None
+
+
+class ObsolescenciaBancoResumen(BaseModel):
+    conteos: dict[str, int]
+    en_riesgo: int
+    sin_verificar: int
+    total: int
+    verificado_mas_antiguo: Optional[date] = None
+
+
+class ObsolescenciaBancoOut(BaseModel):
+    banco: ObsolescenciaBancoCabecera
+    componentes: list[ObsolescenciaBancoComponenteOut]
+    resumen: ObsolescenciaBancoResumen

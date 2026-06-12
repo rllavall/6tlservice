@@ -24,3 +24,11 @@ def get_current_user(
     db.info["usuario_id"] = usuario.id
     db.info["usuario_username"] = usuario.username
     return usuario
+
+
+def get_consultar_fabricante():
+    """Dependencia: función que consulta el estado de ciclo de vida de un producto
+    (Claude Code headless). Inyectable — en tests se sobreescribe por un doble, así
+    el import real de run_obsolescencia (con sus efectos de arranque) nunca ocurre."""
+    from run_obsolescencia import consultar_fabricante
+    return consultar_fabricante
