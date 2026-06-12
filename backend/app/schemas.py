@@ -941,3 +941,35 @@ class ObsolescenciaBancoOut(BaseModel):
     banco: ObsolescenciaBancoCabecera
     componentes: list[ObsolescenciaBancoComponenteOut]
     resumen: ObsolescenciaBancoResumen
+
+
+# --- Progreso del refresco de obsolescencia por banco ---
+class RefrescoIniciado(BaseModel):
+    job_id: str
+    total: int
+
+
+class RefrescoActual(BaseModel):
+    part_number: str
+    fabricante: Optional[str] = None
+    descripcion: str
+
+
+class RefrescoResultadoItem(BaseModel):
+    part_number: str
+    descripcion: str
+    estado_anterior: Optional[str] = None
+    estado_nuevo: Optional[str] = None
+    cambio: bool
+
+
+class RefrescoProgreso(BaseModel):
+    job_id: str
+    equipo_id: int
+    total: int
+    indice: int
+    estado: str  # en_curso | terminado | error
+    actual: Optional[RefrescoActual] = None
+    resultados: list[RefrescoResultadoItem] = Field(default_factory=list)
+    report: Optional[ObsolescenciaBancoOut] = None
+    error: Optional[str] = None

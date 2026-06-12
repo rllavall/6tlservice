@@ -88,3 +88,35 @@ def test_refrescar_banco_respeta_limite(db_session):
     obsolescencia_banco.refrescar_banco(
         db_session, eq_id, date(2026, 6, 12), limite=1, consultar=fake_consultar)
     assert len(llamados) == 1
+
+
+def test_refrescar_banco_emite_progreso(db_session):
+    eq_id = _seed_banco(db_session)
+
+    def fake(p, url):
+        if p.part_number == "P-ACT":
+            return {"estado": "obsoleto", "fecha_evento": None,
+                    "url_fuente": "http://b/eol", "resumen": "x"}
+        return None
+
+    ev = []
+    obsolescencia_banco.refrescar_banco(
+        db_session, eq_id, date(2026, 6, 12), limite=10,
+        consultar=fake, on_progreso=ev.append)
+
+    # P-OBS (verificado 2026-01-01) va antes que P-ACT (2026-06-01)
+    pares = [(e["tipo"], e["producto"].part_number) for e in ev]
+    assert ("actual", "P-OBS") in pares and ("resultado", "P-OBS") in pares
+    assert ("actual", "P-ACT") in pares and ("resultado", "P-ACT") in pares
+    # 'actual' precede a su 'resultado' para P-ACT
+    ia = next(i for i, e in enumerate(ev)
+              if e["tipo"] == "actual" and e["producto"].part_number == "P-ACT")
+    ir = next(i for i, e in enumerate(ev)
+              if e["tipo"] == "resultado" and e["producto"].part_number == "P-ACT")
+    assert ia < ir
+    r_act = next(e for e in ev if e["tipo"] == "resultado" and e["producto"].part_number == "P-ACT")
+    assert r_act["estado_anterior"] == "activo"
+    assert r_act["estado_nuevo"] == "obsoleto"
+    assert r_act["cambio"] is True
+    r_obs = next(e for e in ev if e["tipo"] == "resultado" and e["producto"].part_number == "P-OBS")
+    assert r_obs["cambio"] is False  # fake devolvió None para P-OBS
