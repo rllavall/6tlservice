@@ -58,6 +58,15 @@ def test_export_formato_invalido_422(client, db_session):
     assert client.get(f"/api/equipos/{eq_id}/obsolescencia/export?formato=csv").status_code == 422
 
 
+def test_export_expone_content_disposition_cors(client, db_session):
+    # En dev el front (otro origen) debe poder leer el filename del Content-Disposition.
+    eq_id = _seed(db_session)
+    resp = client.get(f"/api/equipos/{eq_id}/obsolescencia/export?formato=xlsx",
+                      headers={"Origin": "http://localhost:8080"})
+    assert resp.status_code == 200
+    assert "Content-Disposition" in resp.headers.get("access-control-expose-headers", "")
+
+
 def test_report_requiere_auth(client_sin_auth, db_session):
     eq_id = _seed(db_session)
     assert client_sin_auth.get(f"/api/equipos/{eq_id}/obsolescencia").status_code == 401

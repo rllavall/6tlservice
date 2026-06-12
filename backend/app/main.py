@@ -40,6 +40,8 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    # el front (otro origen en dev) necesita leer el filename de las descargas
+    expose_headers=["Content-Disposition"],
 )
 
 from app.routers import clientes
