@@ -86,3 +86,35 @@ def test_resumen_obsolescencia(db_session):
     assert r["conteos"]["obsoleto"] == 1
     assert r["conteos"]["activo"] == 1
     assert len(r["noticias"]) == 1
+
+
+def test_enviar_informe_envia_solo_no_notificadas_y_marca(db_session):
+    p = _prod(db_session, "A")
+    svc.registrar_hallazgo(db_session, p.id, "obsoleto", hoy=date(2026, 6, 11), url="https://x")
+    capturado = {}
+
+    def fake_notificar(asunto, cuerpo):
+        capturado["asunto"] = asunto
+        capturado["cuerpo"] = cuerpo
+        return {"email": True, "telegram": True}
+
+    r = svc.enviar_informe(db_session, date(2026, 6, 11), notificar_fn=fake_notificar)
+    assert r["enviado"] is True and r["total"] == 1
+    assert "A" in capturado["cuerpo"] and "obsoleto" in capturado["cuerpo"]
+    # marcada como notificada
+    assert db_session.query(models.NoticiaObsolescencia).filter_by(notificado=True).count() == 1
+    # segunda llamada: nada que enviar
+    r2 = svc.enviar_informe(db_session, date(2026, 6, 12), notificar_fn=fake_notificar)
+    assert r2["enviado"] is False and r2["total"] == 0
+
+
+def test_enviar_informe_no_envia_si_vacio(db_session):
+    llamado = {"n": 0}
+
+    def fake_notificar(asunto, cuerpo):
+        llamado["n"] += 1
+        return {}
+
+    r = svc.enviar_informe(db_session, date(2026, 6, 11), notificar_fn=fake_notificar)
+    assert r["enviado"] is False
+    assert llamado["n"] == 0

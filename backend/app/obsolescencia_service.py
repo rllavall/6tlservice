@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app import models, obsolescencia
+from app import models, obsolescencia, notificaciones
 
 
 def productos_a_revisar(db: Session, hoy: date, *, dias: int = 7, limite: int | None = None):
@@ -55,6 +55,40 @@ def registrar_hallazgo(db: Session, producto_id: int, estado: str, *, hoy: date,
             resumen=resumen, notificado=False))
     db.commit()
     return {"registrado": True, "cambio": notable, "motivo": None}
+
+
+def construir_informe(db: Session, hoy: date) -> dict:
+    noticias = (
+        db.query(models.NoticiaObsolescencia)
+        .filter(models.NoticiaObsolescencia.notificado.is_(False))
+        .order_by(models.NoticiaObsolescencia.fecha_deteccion.asc(),
+                  models.NoticiaObsolescencia.id.asc())
+        .all()
+    )
+    total = len(noticias)
+    asunto = f"[6TL Postventa] Cambios de obsolescencia ({total})"
+    lineas = [f"Cambios de ciclo de vida detectados al {hoy.isoformat()}:", ""]
+    for n in noticias:
+        p = db.get(models.Producto, n.producto_id)
+        ref = p.part_number if p else f"producto#{n.producto_id}"
+        linea = f"- {ref}: {n.estado_anterior or 'sin verificar'} -> {n.estado_nuevo}"
+        if n.url_fuente:
+            linea += f"  ({n.url_fuente})"
+        lineas.append(linea)
+    return {"asunto": asunto, "cuerpo": "\n".join(lineas), "total": total, "noticias": noticias}
+
+
+def enviar_informe(db: Session, hoy: date, *, notificar_fn=notificaciones.notificar) -> dict:
+    info = construir_informe(db, hoy)
+    if info["total"] == 0:
+        return {"asunto": info["asunto"], "cuerpo": info["cuerpo"], "total": 0,
+                "canales": {"email": None, "telegram": None}, "enviado": False}
+    canales = notificar_fn(info["asunto"], info["cuerpo"])
+    for n in info["noticias"]:
+        n.notificado = True
+    db.commit()
+    return {"asunto": info["asunto"], "cuerpo": info["cuerpo"], "total": info["total"],
+            "canales": canales, "enviado": True}
 
 
 def resumen_obsolescencia(db: Session, *, limite_noticias: int = 20) -> dict:
