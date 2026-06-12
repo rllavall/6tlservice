@@ -115,3 +115,24 @@ def test_agrega_categoria_componente_a_productos():
         c.exec_driver_sql("CREATE TABLE productos (id INTEGER PRIMARY KEY, part_number TEXT)")
     add_missing_columns(eng)
     assert "categoria_componente" in _columnas(eng, "productos")
+
+
+def test_migracion_anade_columnas_obsolescencia(tmp_path):
+    from sqlalchemy import create_engine, text
+    from app.migrations import add_missing_columns
+
+    db = tmp_path / "old.db"
+    eng = create_engine(f"sqlite+pysqlite:///{db}")
+    with eng.begin() as conn:
+        conn.exec_driver_sql("CREATE TABLE productos (id INTEGER PRIMARY KEY, part_number TEXT)")
+        conn.exec_driver_sql("CREATE TABLE fabricantes (id INTEGER PRIMARY KEY, nombre TEXT)")
+
+    add_missing_columns(eng)
+
+    with eng.connect() as conn:
+        prod_cols = {r[1] for r in conn.execute(text("PRAGMA table_info(productos)"))}
+        fab_cols = {r[1] for r in conn.execute(text("PRAGMA table_info(fabricantes)"))}
+    assert {"estado_ciclo_vida", "ciclo_vida_fecha", "ciclo_vida_url",
+            "ciclo_vida_resumen", "ciclo_vida_verificado_en"} <= prod_cols
+    assert "url_obsolescencia" in fab_cols
+    eng.dispose()
