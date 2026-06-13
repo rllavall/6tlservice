@@ -17,6 +17,7 @@ _COLUMNAS = [
     ("ciclo_vida_verificado_en", "Verificado"),
     ("ciclo_vida_url", "Fuente"),
     ("ciclo_vida_resumen", "Resumen"),
+    ("ciclo_vida_cita", "Cita"),
 ]
 _CAB = dict(_COLUMNAS)
 
@@ -49,7 +50,7 @@ def a_xlsx(informe: dict) -> bytes:
     riesgo_fill = PatternFill("solid", fgColor="FFC7CE")
     col_estado = [c for c, _ in _COLUMNAS].index("estado_ciclo_vida") + 1
     for fila in informe["componentes"]:
-        ws.append([_txt(fila[clave]) for clave, _ in _COLUMNAS])
+        ws.append([_txt(fila.get(clave)) for clave, _ in _COLUMNAS])
         if fila["severidad"] > 0:
             ws.cell(row=ws.max_row, column=col_estado).fill = riesgo_fill
 

@@ -46,3 +46,13 @@ def test_a_pdf_tiene_cabecera_pdf():
     data = obsolescencia_export.a_pdf(_informe())
     assert data[:5] == b"%PDF-"
     assert len(data) > 1000
+
+
+def test_a_xlsx_incluye_cita():
+    inf = _informe()
+    inf["componentes"][0]["ciclo_vida_cita"] = "Obsolete per PCN-001"
+    inf["componentes"][1]["ciclo_vida_cita"] = None
+    data = obsolescencia_export.a_xlsx(inf)
+    sheet = zipfile.ZipFile(io.BytesIO(data)).read("xl/worksheets/sheet1.xml").decode("utf-8")
+    assert "Cita" in sheet                       # encabezado
+    assert "Obsolete per PCN-001" in sheet       # valor

@@ -964,6 +964,7 @@ class RefrescoResultadoItem(BaseModel):
     estado_nuevo: Optional[str] = None
     cambio: bool
     tokens: int = 0
+    cita: Optional[str] = None
     estado_consulta: str = "ok"
 
 
