@@ -230,11 +230,12 @@ def ejecutar(db, hoy, *, limite=20, consultar=consultar_fabricante,
     for p in prods:
         url = _url_fabricante(db, p)
         v = consultar(p, url)
-        if not v or not v.get("estado"):
-            continue
-        obsolescencia_service.registrar_hallazgo(
-            db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
-            url=v.get("url_fuente"), resumen=v.get("resumen"))
+        if v and v.get("estado"):
+            obsolescencia_service.registrar_hallazgo(
+                db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
+                url=v.get("url_fuente"), resumen=v.get("resumen"), cita=v.get("cita"))
+        elif (v or {}).get("estado_consulta") == "no_encontrado":
+            obsolescencia_service.marcar_revisado(db, p.id, hoy)
     return obsolescencia_service.enviar_informe(db, hoy, notificar_fn=notificar_fn)
 
 
@@ -252,7 +253,7 @@ def main() -> int:
                     obsolescencia_service.registrar_hallazgo(
                         db, p.id, v["estado"], hoy=date.today(),
                         fecha_evento=v.get("fecha_evento"), url=v.get("url_fuente"),
-                        resumen=v.get("resumen"))
+                        resumen=v.get("resumen"), cita=v.get("cita"))
             info = obsolescencia_service.construir_informe(db, date.today())
             print(f"[dry-run] cambios pendientes de notificar: {info['total']}")
             return 0

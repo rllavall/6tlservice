@@ -30,7 +30,7 @@ def productos_a_revisar(db: Session, hoy: date, *, dias: int = 7, limite: int | 
 
 def registrar_hallazgo(db: Session, producto_id: int, estado: str, *, hoy: date,
                        fecha_evento: date | None = None, url: str | None = None,
-                       resumen: str | None = None) -> dict:
+                       resumen: str | None = None, cita: str | None = None) -> dict:
     p = db.get(models.Producto, producto_id)
     if p is None:
         return {"registrado": False, "motivo": "no_existe", "cambio": False}
@@ -46,15 +46,27 @@ def registrar_hallazgo(db: Session, producto_id: int, estado: str, *, hoy: date,
     p.ciclo_vida_fecha = fecha_evento
     p.ciclo_vida_url = url
     p.ciclo_vida_resumen = resumen
+    p.ciclo_vida_cita = cita
     p.ciclo_vida_verificado_en = hoy
 
     if notable:
         db.add(models.NoticiaObsolescencia(
             producto_id=p.id, fecha_deteccion=hoy, estado_anterior=anterior,
             estado_nuevo=estado, fecha_evento=fecha_evento, url_fuente=url,
-            resumen=resumen, notificado=False))
+            resumen=resumen, cita=cita, notificado=False))
     db.commit()
     return {"registrado": True, "cambio": notable, "motivo": None}
+
+
+def marcar_revisado(db: Session, producto_id: int, hoy: date) -> bool:
+    """Sella que el producto se revisó hoy SIN hallazgo (no encontrado en la web),
+    sin tocar estado/cita/url. Evita reintentarlo en cada pasada."""
+    p = db.get(models.Producto, producto_id)
+    if p is None:
+        return False
+    p.ciclo_vida_verificado_en = hoy
+    db.commit()
+    return True
 
 
 def construir_informe(db: Session, hoy: date) -> dict:

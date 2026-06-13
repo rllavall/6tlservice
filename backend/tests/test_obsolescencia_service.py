@@ -118,3 +118,26 @@ def test_enviar_informe_no_envia_si_vacio(db_session):
     r = svc.enviar_informe(db_session, date(2026, 6, 11), notificar_fn=fake_notificar)
     assert r["enviado"] is False
     assert llamado["n"] == 0
+
+
+def test_registrar_hallazgo_guarda_cita_en_producto_y_noticia(db_session):
+    p = _prod(db_session, "A")
+    svc.registrar_hallazgo(db_session, p.id, "obsoleto", hoy=date(2026, 6, 13),
+                           url="https://x", resumen="EOL", cita="Status: Obsolete")
+    db_session.refresh(p)
+    assert p.ciclo_vida_cita == "Status: Obsolete"
+    n = db_session.query(models.NoticiaObsolescencia).filter_by(producto_id=p.id).one()
+    assert n.cita == "Status: Obsolete"
+
+
+def test_marcar_revisado_sella_fecha_sin_tocar_estado(db_session):
+    p = _prod(db_session, "A", estado_ciclo_vida="nrnd",
+              ciclo_vida_url="https://prev", ciclo_vida_cita="cita previa")
+    ok = svc.marcar_revisado(db_session, p.id, date(2026, 6, 13))
+    assert ok is True
+    db_session.refresh(p)
+    assert p.ciclo_vida_verificado_en == date(2026, 6, 13)
+    assert p.estado_ciclo_vida == "nrnd"          # intacto
+    assert p.ciclo_vida_url == "https://prev"     # intacto
+    assert p.ciclo_vida_cita == "cita previa"     # intacta
+    assert svc.marcar_revisado(db_session, 9999, date(2026, 6, 13)) is False
