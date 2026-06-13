@@ -92,10 +92,12 @@ def _tokens_de_usage(usage):
 
 
 def _procesar_stream(lineas, on_paso=None):
-    """Consume líneas stream-json. Por cada tool_use de búsqueda llama on_paso.
-    Devuelve (texto_result|None, tokens_total, hubo_result)."""
+    """Consume líneas stream-json. Por cada tool_use de búsqueda llama on_paso y
+    recolecta las URLs realmente abiertas (WebFetch). Devuelve
+    (texto_result|None, tokens_total, hubo_result, urls_visitadas)."""
     texto = None
     tokens = 0
+    urls = []
     for linea in lineas:
         linea = (linea or "").strip()
         if not linea:
@@ -109,6 +111,10 @@ def _procesar_stream(lineas, on_paso=None):
             for b in ev.get("message", {}).get("content", []) or []:
                 if b.get("type") != "tool_use":
                     continue
+                if b.get("name") == "WebFetch":
+                    u = (b.get("input") or {}).get("url")
+                    if u:
+                        urls.append(u)
                 desc = _descripcion_paso(b.get("name"), b.get("input"))
                 if desc and on_paso is not None:
                     try:
@@ -118,7 +124,7 @@ def _procesar_stream(lineas, on_paso=None):
         elif tipo == "result":
             texto = ev.get("result")
             tokens = _tokens_de_usage(ev.get("usage"))
-    return texto, tokens, (texto is not None)
+    return texto, tokens, (texto is not None), urls
 
 
 def _parsear_estado(out):
@@ -190,7 +196,7 @@ def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=N
     timer = _timer_factory(timeout, _matar)
     timer.start()
     try:
-        texto, tokens, _ = _procesar_stream(proc.stdout, on_paso)
+        texto, tokens, _, urls_visitadas = _procesar_stream(proc.stdout, on_paso)
     except Exception:
         timer.cancel()
         try:

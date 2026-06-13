@@ -35,7 +35,7 @@ def test_tokens_de_usage_solo_input_output_excluye_cache():
     assert ro._tokens_de_usage({}) == 0
 
 
-def test_procesar_stream_emite_pasos_y_saca_tokens_y_texto():
+def test_procesar_stream_emite_pasos_saca_tokens_texto_y_urls():
     lineas = [
         '{"type":"system","subtype":"init"}',
         '{"type":"system","subtype":"hook_started"}',
@@ -47,11 +47,12 @@ def test_procesar_stream_emite_pasos_y_saca_tokens_y_texto():
                        "cache_creation_input_tokens": 0, "cache_read_input_tokens": 20000}),
     ]
     pasos = []
-    texto, tokens, hubo = ro._procesar_stream(iter(lineas), on_paso=lambda ev: pasos.append(ev["descripcion"]))
+    texto, tokens, hubo, urls = ro._procesar_stream(iter(lineas), on_paso=lambda ev: pasos.append(ev["descripcion"]))
     assert hubo is True
     assert tokens == 4100  # input+output (4000+100); excluye cache_read (20000)
     assert "obsoleto" in texto
     assert pasos == ["🔎 Buscando: «MAX3232 lifecycle»", "🌐 Leyendo www.ti.com"]
+    assert urls == ["https://www.ti.com/product/MAX3232"]  # solo WebFetch, no WebSearch
 
 
 def test_parsear_estado_extrae_dict_o_none():
