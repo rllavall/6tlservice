@@ -25,6 +25,7 @@ def crear_job(equipo_id: int, total: int) -> str:
             "estado": "en_curso",
             "actual": None,
             "resultados": [],
+            "tokens_total": 0,
             "report": None,
             "error": None,
         }
@@ -39,6 +40,8 @@ def snapshot(job_id: str) -> dict | None:
         copia = dict(job)
         copia["resultados"] = list(job["resultados"])
         copia["actual"] = dict(job["actual"]) if job["actual"] else None
+        if copia["actual"] is not None:
+            copia["actual"]["pasos"] = list(job["actual"].get("pasos", []))
         return copia
 
 
@@ -53,7 +56,11 @@ def _hacer_callback(job_id: str):
                 job["indice"] = ev["indice"]
                 job["actual"] = {"part_number": p.part_number,
                                  "fabricante": p.fabricante,
-                                 "descripcion": p.descripcion}
+                                 "descripcion": p.descripcion,
+                                 "pasos": []}
+            elif ev["tipo"] == "paso":
+                if job["actual"] is not None and ev.get("descripcion"):
+                    job["actual"]["pasos"].append(ev["descripcion"])
             elif ev["tipo"] == "resultado":
                 job["resultados"].append({
                     "part_number": p.part_number,
@@ -61,7 +68,10 @@ def _hacer_callback(job_id: str):
                     "estado_anterior": ev["estado_anterior"],
                     "estado_nuevo": ev["estado_nuevo"],
                     "cambio": ev["cambio"],
+                    "tokens": ev.get("tokens", 0),
+                    "estado_consulta": ev.get("estado_consulta", "ok"),
                 })
+                job["tokens_total"] += ev.get("tokens", 0)
     return cb
 
 
