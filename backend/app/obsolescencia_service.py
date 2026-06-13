@@ -70,6 +70,8 @@ def registrar_manual(db: Session, producto_id: int, estado: str, *, hoy: date,
         return {"registrado": False, "motivo": "no_existe", "cambio": False}
     if not obsolescencia.estado_valido(estado):
         return {"registrado": False, "motivo": "estado_invalido", "cambio": False}
+    # Sin bloqueo de url (a diferencia de registrar_hallazgo): el operario puede
+    # confirmar el estado a mano aunque la web bloquee bots y no tenga un enlace limpio.
 
     anterior = p.estado_ciclo_vida
     notable = obsolescencia.es_cambio_notable(anterior, estado)
