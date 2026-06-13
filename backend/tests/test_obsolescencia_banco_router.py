@@ -75,9 +75,12 @@ def test_report_requiere_auth(client_sin_auth, db_session):
 def test_refrescar_usa_consultar_inyectado(client, db_session):
     eq_id = _seed(db_session)
 
-    def fake_consultar(producto, url):
+    def fake_consultar(producto, url, *, on_paso=None):
+        if on_paso:
+            on_paso({"descripcion": "🔎 Buscando"})
         return {"estado": "obsoleto", "fecha_evento": None,
-                "url_fuente": "http://beta/eol", "resumen": "EOL"}
+                "url_fuente": "http://beta/eol", "resumen": "EOL",
+                "tokens_total": 777, "estado_consulta": "ok"}
 
     app.dependency_overrides[get_consultar_fabricante] = lambda: fake_consultar
     try:
@@ -100,9 +103,14 @@ def test_refrescar_iniciar_y_progreso(client, db_session, memory_engine, monkeyp
     Factory = sessionmaker(bind=memory_engine, autoflush=False, expire_on_commit=False)
 
     # consultar inyectado (sin red) + lanzar inline (sin hilo) usando el motor de test
-    app.dependency_overrides[get_consultar_fabricante] = lambda: (
-        lambda p, url: {"estado": "obsoleto", "fecha_evento": None,
-                        "url_fuente": "http://b/eol", "resumen": "x"})
+    def _fake_consultar(p, url, *, on_paso=None):
+        if on_paso:
+            on_paso({"descripcion": "🔎 Buscando: «x»"})
+        return {"estado": "obsoleto", "fecha_evento": None,
+                "url_fuente": "http://b/eol", "resumen": "x",
+                "tokens_total": 777, "estado_consulta": "ok"}
+
+    app.dependency_overrides[get_consultar_fabricante] = lambda: _fake_consultar
     monkeypatch.setattr(
         obsolescencia_jobs, "lanzar",
         lambda job_id, equipo_id, **kw: obsolescencia_jobs.ejecutar(
@@ -119,13 +127,18 @@ def test_refrescar_iniciar_y_progreso(client, db_session, memory_engine, monkeyp
         assert prog["estado"] == "terminado"
         assert prog["indice"] == 1
         assert prog["resultados"][0]["estado_nuevo"] == "obsoleto"
+        assert prog["tokens_total"] == 777
+        assert prog["resultados"][0]["tokens"] == 777
+        assert prog["resultados"][0]["estado_consulta"] == "ok"
         assert prog["report"]["resumen"]["total"] == 1
     finally:
         app.dependency_overrides.pop(get_consultar_fabricante, None)
 
 
 def test_refrescar_iniciar_equipo_inexistente_404(client):
-    app.dependency_overrides[get_consultar_fabricante] = lambda: (lambda p, url: None)
+    app.dependency_overrides[get_consultar_fabricante] = lambda: (
+        lambda p, url, *, on_paso=None: {"estado": None, "tokens_total": 0,
+                                         "estado_consulta": "sin_respuesta"})
     try:
         r = client.post("/api/equipos/9999/obsolescencia/refrescar/iniciar")
         assert r.status_code == 404
