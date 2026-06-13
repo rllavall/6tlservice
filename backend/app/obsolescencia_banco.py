@@ -101,16 +101,30 @@ def productos_de_equipo(db: Session, equipo_id: int) -> list[models.Producto]:
     return prods
 
 
+def _reemitir_paso(on_progreso, producto, indice, total):
+    """Devuelve un on_paso que reemite cada paso como evento 'paso' del on_progreso."""
+    if on_progreso is None:
+        return None
+
+    def on_paso(ev):
+        on_progreso({"tipo": "paso", "indice": indice, "total": total,
+                     "producto": producto, "descripcion": ev.get("descripcion")})
+    return on_paso
+
+
 def refrescar_banco(db: Session, equipo_id: int, hoy: date, *,
                     limite: int = 10, consultar, on_progreso=None) -> dict:
     """Re-verifica hasta `limite` productos del banco vía `consultar` (inyectable),
     registra los hallazgos y devuelve el report actualizado. Best-effort: un
-    `consultar` que devuelve None o falla no rompe el refresco.
+    `consultar` que devuelve None/dict-sin-estado o falla no rompe el refresco.
+    `consultar` se invoca SIEMPRE como `consultar(p, url, on_paso=...)`.
 
     Si se pasa `on_progreso`, se invoca con un dict por evento:
     `{"tipo":"actual","indice","total","producto"}` antes de consultar cada
-    producto, y `{"tipo":"resultado","indice","total","producto",
-    "estado_anterior","estado_nuevo","cambio"}` después de registrar."""
+    producto; `{"tipo":"paso","indice","total","producto","descripcion"}` por
+    cada paso reemitido por el agente; y `{"tipo":"resultado","indice","total",
+    "producto","estado_anterior","estado_nuevo","cambio","tokens",
+    "estado_consulta"}` después de registrar."""
     prods = productos_de_equipo(db, equipo_id)[:limite]
     total = len(prods)
     for i, p in enumerate(prods, start=1):
@@ -118,17 +132,21 @@ def refrescar_banco(db: Session, equipo_id: int, hoy: date, *,
             on_progreso({"tipo": "actual", "indice": i, "total": total, "producto": p})
         anterior = p.estado_ciclo_vida
         try:
-            v = consultar(p, _url_fabricante(db, p))
+            v = consultar(p, _url_fabricante(db, p),
+                          on_paso=_reemitir_paso(on_progreso, p, i, total))
         except Exception:
             v = None
+        tokens = (v or {}).get("tokens_total", 0)
+        estado_consulta = (v or {}).get("estado_consulta", "sin_respuesta")
         cambio = False
-        if v:
+        if v and v.get("estado"):
             res = obsolescencia_service.registrar_hallazgo(
                 db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
                 url=v.get("url_fuente"), resumen=v.get("resumen"))
             cambio = bool(res.get("cambio"))
+            estado_consulta = "ok"
         if on_progreso is not None:
             on_progreso({"tipo": "resultado", "indice": i, "total": total, "producto": p,
                          "estado_anterior": anterior, "estado_nuevo": p.estado_ciclo_vida,
-                         "cambio": cambio})
+                         "cambio": cambio, "tokens": tokens, "estado_consulta": estado_consulta})
     return informe_banco(db, equipo_id, hoy)

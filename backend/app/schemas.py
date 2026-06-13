@@ -953,6 +953,7 @@ class RefrescoActual(BaseModel):
     part_number: str
     fabricante: Optional[str] = None
     descripcion: str
+    pasos: list[str] = Field(default_factory=list)
 
 
 class RefrescoResultadoItem(BaseModel):
@@ -961,6 +962,8 @@ class RefrescoResultadoItem(BaseModel):
     estado_anterior: Optional[str] = None
     estado_nuevo: Optional[str] = None
     cambio: bool
+    tokens: int = 0
+    estado_consulta: str = "ok"
 
 
 class RefrescoProgreso(BaseModel):
@@ -969,6 +972,7 @@ class RefrescoProgreso(BaseModel):
     total: int
     indice: int
     estado: str  # en_curso | terminado | error
+    tokens_total: int = 0
     actual: Optional[RefrescoActual] = None
     resultados: list[RefrescoResultadoItem] = Field(default_factory=list)
     report: Optional[ObsolescenciaBancoOut] = None

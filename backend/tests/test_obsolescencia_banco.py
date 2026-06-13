@@ -59,7 +59,7 @@ def test_productos_de_equipo_solo_verificables_no_verificados_primero(db_session
 def test_refrescar_banco_registra_estado_crea_noticia_y_respeta_limite(db_session):
     eq_id = _seed_banco(db_session)
 
-    def fake_consultar(producto, url):
+    def fake_consultar(producto, url, *, on_paso=None):
         # empeora P-ACT (activo -> obsoleto); el resto sin cambio concluyente
         if producto.part_number == "P-ACT":
             return {"estado": "obsoleto", "fecha_evento": None,
@@ -81,7 +81,7 @@ def test_refrescar_banco_respeta_limite(db_session):
     eq_id = _seed_banco(db_session)
     llamados = []
 
-    def fake_consultar(producto, url):
+    def fake_consultar(producto, url, *, on_paso=None):
         llamados.append(producto.part_number)
         return None
 
@@ -93,7 +93,7 @@ def test_refrescar_banco_respeta_limite(db_session):
 def test_refrescar_banco_emite_progreso(db_session):
     eq_id = _seed_banco(db_session)
 
-    def fake(p, url):
+    def fake(p, url, *, on_paso=None):
         if p.part_number == "P-ACT":
             return {"estado": "obsoleto", "fecha_evento": None,
                     "url_fuente": "http://b/eol", "resumen": "x"}
@@ -120,3 +120,32 @@ def test_refrescar_banco_emite_progreso(db_session):
     assert r_act["cambio"] is True
     r_obs = next(e for e in ev if e["tipo"] == "resultado" and e["producto"].part_number == "P-OBS")
     assert r_obs["cambio"] is False  # fake devolvió None para P-OBS
+
+
+def test_refrescar_banco_reemite_pasos_y_tokens(db_session):
+    eq_id = _seed_banco(db_session)
+
+    def fake(p, url, *, on_paso=None):
+        if on_paso:
+            on_paso({"descripcion": "🔎 Buscando: «x»"})
+            on_paso({"descripcion": "🌐 Leyendo ti.com"})
+        if p.part_number == "P-ACT":
+            return {"estado": "obsoleto", "fecha_evento": None, "url_fuente": "http://b",
+                    "resumen": "x", "tokens_total": 1234, "estado_consulta": "ok"}
+        return {"estado": None, "tokens_total": 99, "estado_consulta": "sin_respuesta"}
+
+    ev = []
+    obsolescencia_banco.refrescar_banco(
+        db_session, eq_id, date(2026, 6, 13), limite=10,
+        consultar=fake, on_progreso=ev.append)
+
+    pasos = [e for e in ev if e["tipo"] == "paso"]
+    assert any(e["descripcion"] == "🔎 Buscando: «x»" for e in pasos)
+    assert len(pasos) >= 2
+    res = [e for e in ev if e["tipo"] == "resultado"]
+    pact = next(e for e in res if e["producto"].part_number == "P-ACT")
+    assert pact["tokens"] == 1234
+    assert pact["estado_consulta"] == "ok"
+    pobs = next(e for e in res if e["producto"].part_number == "P-OBS")
+    assert pobs["tokens"] == 99
+    assert pobs["estado_consulta"] == "sin_respuesta"
