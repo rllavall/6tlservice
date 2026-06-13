@@ -99,6 +99,8 @@ class ProductoOut(_ORM):
     ciclo_vida_url: Optional[str] = None
     ciclo_vida_resumen: Optional[str] = None
     ciclo_vida_verificado_en: Optional[date] = None
+    ciclo_vida_cita: Optional[str] = None
+    ciclo_vida_origen: Optional[str] = None
 
 
 # --- Equipo ---
@@ -872,6 +874,13 @@ class HallazgoObsolescencia(BaseModel):
     fecha_evento: Optional[date] = None
     url: Optional[str] = None
     resumen: Optional[str] = None
+
+
+class CicloVidaManualIn(BaseModel):
+    estado: _ESTADO_CICLO
+    fecha_evento: Optional[date] = None
+    url: Optional[str] = None
+    nota: Optional[str] = None
 
 
 class ProductoARevisarOut(BaseModel):

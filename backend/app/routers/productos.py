@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import models
+from app import models, obsolescencia_service
 from app.db import get_db
-from app.schemas import ProductoCreate, ProductoOut
+from app.schemas import CicloVidaManualIn, ProductoCreate, ProductoOut
 
 router = APIRouter(prefix="/api/productos", tags=["productos"])
 
@@ -32,6 +33,19 @@ def obtener(producto_id: int, db: Session = Depends(get_db)) -> models.Producto:
     p = db.get(models.Producto, producto_id)
     if p is None:
         raise HTTPException(404, "Producto no encontrado")
+    return p
+
+
+@router.patch("/{producto_id}/ciclo-vida", response_model=ProductoOut)
+def fijar_ciclo_vida_manual(producto_id: int, payload: CicloVidaManualIn,
+                            db: Session = Depends(get_db)) -> models.Producto:
+    p = db.get(models.Producto, producto_id)
+    if p is None:
+        raise HTTPException(404, "Producto no encontrado")
+    obsolescencia_service.registrar_manual(
+        db, producto_id, payload.estado, hoy=date.today(),
+        fecha_evento=payload.fecha_evento, url=payload.url, nota=payload.nota)
+    db.refresh(p)
     return p
 
 
