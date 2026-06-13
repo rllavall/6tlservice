@@ -58,6 +58,7 @@ def informe_banco(db: Session, equipo_id: int, hoy: date) -> dict:
             "ciclo_vida_fecha": p.ciclo_vida_fecha,
             "ciclo_vida_url": p.ciclo_vida_url,
             "ciclo_vida_resumen": p.ciclo_vida_resumen,
+            "ciclo_vida_cita": p.ciclo_vida_cita,
             "ciclo_vida_verificado_en": p.ciclo_vida_verificado_en,
         })
 
@@ -137,16 +138,20 @@ def refrescar_banco(db: Session, equipo_id: int, hoy: date, *,
         except Exception:
             v = None
         tokens = (v or {}).get("tokens_total", 0)
-        estado_consulta = (v or {}).get("estado_consulta", "sin_respuesta")
+        estado_consulta = (v or {}).get("estado_consulta", "error")
+        cita = (v or {}).get("cita")
         cambio = False
         if v and v.get("estado"):
             res = obsolescencia_service.registrar_hallazgo(
                 db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
-                url=v.get("url_fuente"), resumen=v.get("resumen"))
+                url=v.get("url_fuente"), resumen=v.get("resumen"), cita=cita)
             cambio = bool(res.get("cambio"))
             estado_consulta = "ok"
+        elif estado_consulta == "no_encontrado":
+            obsolescencia_service.marcar_revisado(db, p.id, hoy)
         if on_progreso is not None:
             on_progreso({"tipo": "resultado", "indice": i, "total": total, "producto": p,
                          "estado_anterior": anterior, "estado_nuevo": p.estado_ciclo_vida,
-                         "cambio": cambio, "tokens": tokens, "estado_consulta": estado_consulta})
+                         "cambio": cambio, "tokens": tokens, "cita": cita,
+                         "estado_consulta": estado_consulta})
     return informe_banco(db, equipo_id, hoy)

@@ -132,7 +132,7 @@ def test_refrescar_banco_reemite_pasos_y_tokens(db_session):
         if p.part_number == "P-ACT":
             return {"estado": "obsoleto", "fecha_evento": None, "url_fuente": "http://b",
                     "resumen": "x", "tokens_total": 1234, "estado_consulta": "ok"}
-        return {"estado": None, "tokens_total": 99, "estado_consulta": "sin_respuesta"}
+        return {"estado": None, "tokens_total": 99, "estado_consulta": "no_encontrado"}
 
     ev = []
     obsolescencia_banco.refrescar_banco(
@@ -148,4 +148,32 @@ def test_refrescar_banco_reemite_pasos_y_tokens(db_session):
     assert pact["estado_consulta"] == "ok"
     pobs = next(e for e in res if e["producto"].part_number == "P-OBS")
     assert pobs["tokens"] == 99
-    assert pobs["estado_consulta"] == "sin_respuesta"
+    assert pobs["estado_consulta"] == "no_encontrado"
+
+
+def test_refrescar_banco_propaga_cita_y_marca_revisado_si_no_encontrado(db_session):
+    eq_id = _seed_banco(db_session)
+
+    def fake(p, url, *, on_paso=None):
+        if p.part_number == "P-ACT":
+            return {"estado": "obsoleto", "fecha_evento": None, "url_fuente": "http://b/eol",
+                    "resumen": "x", "cita": "EOL confirmado", "tokens_total": 10,
+                    "estado_consulta": "ok"}
+        # P-OBS: no encontrado -> no debe cambiar su estado, pero sí sellar verificado_en
+        return {"estado": None, "cita": None, "tokens_total": 5,
+                "estado_consulta": "no_encontrado"}
+
+    ev = []
+    obsolescencia_banco.refrescar_banco(
+        db_session, eq_id, date(2026, 6, 14), limite=10, consultar=fake, on_progreso=ev.append)
+
+    p_act = db_session.query(models.Producto).filter_by(part_number="P-ACT").one()
+    assert p_act.ciclo_vida_cita == "EOL confirmado"
+    p_obs = db_session.query(models.Producto).filter_by(part_number="P-OBS").one()
+    assert p_obs.estado_ciclo_vida == "obsoleto"             # intacto (no se tocó)
+    assert p_obs.ciclo_vida_verificado_en == date(2026, 6, 14)  # sellado
+    r_act = next(e for e in ev if e["tipo"] == "resultado" and e["producto"].part_number == "P-ACT")
+    assert r_act["cita"] == "EOL confirmado"
+    r_obs = next(e for e in ev if e["tipo"] == "resultado" and e["producto"].part_number == "P-OBS")
+    assert r_obs["estado_consulta"] == "no_encontrado"
+    assert r_obs["cita"] is None
