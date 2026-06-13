@@ -1,4 +1,6 @@
-"""ejecutar() no debe registrar hallazgo cuando consultar devuelve estado=None."""
+"""ejecutar() no debe llamar a registrar_hallazgo cuando consultar devuelve estado=None
+(el nuevo contrato de consultar_fabricante devuelve siempre dict, con estado=None en
+'sin respuesta'). El guard `if not v.get("estado")` lo evita aguas arriba."""
 from datetime import date
 
 import run_obsolescencia as ro
@@ -12,13 +14,42 @@ def _seed(db):
     return p.id
 
 
-def test_ejecutar_ignora_dict_sin_estado(db_session, monkeypatch):
-    pid = _seed(db_session)
+def test_ejecutar_no_registra_cuando_consultar_no_da_estado(db_session, monkeypatch):
+    _seed(db_session)
+
     def fake(p, url, **kw):
         return {"estado": None, "tokens_total": 500, "estado_consulta": "sin_respuesta"}
+
+    llamadas = []
+    monkeypatch.setattr(obsolescencia_service, "registrar_hallazgo",
+                        lambda *a, **k: llamadas.append(a) or {"cambio": False})
     monkeypatch.setattr(obsolescencia_service, "productos_a_revisar",
                         lambda db, hoy, limite=20: db.query(models.Producto).all())
+    monkeypatch.setattr(obsolescencia_service, "enviar_informe",
+                        lambda *a, **k: {"enviado": False, "total": 0, "canales": []})
+
     ro.ejecutar(db_session, date(2026, 6, 13), consultar=fake,
                 notificar_fn=lambda *a, **k: {"enviado": False, "canales": []})
-    p = db_session.get(models.Producto, pid)
-    assert p.estado_ciclo_vida == "activo"
+
+    assert llamadas == []  # con estado=None el guard evita registrar_hallazgo
+
+
+def test_ejecutar_si_registra_cuando_hay_estado(db_session, monkeypatch):
+    _seed(db_session)
+
+    def fake(p, url, **kw):
+        return {"estado": "obsoleto", "fecha_evento": None, "url_fuente": None,
+                "resumen": "x", "tokens_total": 10, "estado_consulta": "ok"}
+
+    llamadas = []
+    monkeypatch.setattr(obsolescencia_service, "registrar_hallazgo",
+                        lambda *a, **k: llamadas.append(a) or {"cambio": True})
+    monkeypatch.setattr(obsolescencia_service, "productos_a_revisar",
+                        lambda db, hoy, limite=20: db.query(models.Producto).all())
+    monkeypatch.setattr(obsolescencia_service, "enviar_informe",
+                        lambda *a, **k: {"enviado": False, "total": 0, "canales": []})
+
+    ro.ejecutar(db_session, date(2026, 6, 13), consultar=fake,
+                notificar_fn=lambda *a, **k: {"enviado": False, "canales": []})
+
+    assert len(llamadas) == 1  # con estado válido SÍ se registra
