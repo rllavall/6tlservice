@@ -70,6 +70,7 @@ class Producto(Base):
     ciclo_vida_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     ciclo_vida_resumen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     ciclo_vida_verificado_en: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    ciclo_vida_cita: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 class Equipo(Base):
@@ -389,4 +390,5 @@ class NoticiaObsolescencia(Base):
     fecha_evento: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     url_fuente: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     resumen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    cita: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notificado: Mapped[bool] = mapped_column(Boolean, default=False)

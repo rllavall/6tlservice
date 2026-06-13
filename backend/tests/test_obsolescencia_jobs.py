@@ -77,9 +77,10 @@ def test_callback_acumula_pasos_y_tokens():
 
     cb({"tipo": "resultado", "indice": 1, "total": 2, "producto": p,
         "estado_anterior": "activo", "estado_nuevo": "obsoleto", "cambio": True,
-        "tokens": 100, "estado_consulta": "ok"})
+        "tokens": 100, "estado_consulta": "ok", "cita": "EOL doc"})
     cb({"tipo": "actual", "indice": 2, "total": 2, "producto": p})
     snap2 = obsolescencia_jobs.snapshot(job_id)
     assert snap2["actual"]["pasos"] == []
     assert snap2["tokens_total"] == 100
     assert snap2["resultados"][0]["tokens"] == 100
+    assert snap2["resultados"][0]["cita"] == "EOL doc"

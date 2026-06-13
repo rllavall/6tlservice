@@ -62,6 +62,27 @@ def _descripcion_paso(name, inp):
     return None
 
 
+def _normalizar_url(u):
+    """host+path en minúsculas, sin esquema, sin 'www.', sin barra final ni query."""
+    if not u:
+        return ""
+    p = urlparse(u if "//" in u else "//" + u)
+    host = (p.netloc or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    path = (p.path or "").rstrip("/").lower()
+    return host + path
+
+
+def _url_verificada(url_fuente, urls_visitadas):
+    """True si url_fuente coincide (host+path normalizado) con alguna URL que el
+    agente abrió de verdad (WebFetch). Prueba de que la fuente no es inventada."""
+    objetivo = _normalizar_url(url_fuente)
+    if not objetivo:
+        return False
+    return any(_normalizar_url(u) == objetivo for u in urls_visitadas)
+
+
 def _tokens_de_usage(usage):
     """Tokens del bloque usage = input + output (EXCLUYE caché: cache_creation y
     cache_read no se cuentan, para reflejar el consumo real de la consulta sin el
@@ -71,10 +92,12 @@ def _tokens_de_usage(usage):
 
 
 def _procesar_stream(lineas, on_paso=None):
-    """Consume líneas stream-json. Por cada tool_use de búsqueda llama on_paso.
-    Devuelve (texto_result|None, tokens_total, hubo_result)."""
+    """Consume líneas stream-json. Por cada tool_use de búsqueda llama on_paso y
+    recolecta las URLs realmente abiertas (WebFetch). Devuelve
+    (texto_result|None, tokens_total, hubo_result, urls_visitadas)."""
     texto = None
     tokens = 0
+    urls = []
     for linea in lineas:
         linea = (linea or "").strip()
         if not linea:
@@ -88,6 +111,10 @@ def _procesar_stream(lineas, on_paso=None):
             for b in ev.get("message", {}).get("content", []) or []:
                 if b.get("type") != "tool_use":
                     continue
+                if b.get("name") == "WebFetch":
+                    u = (b.get("input") or {}).get("url")
+                    if u:
+                        urls.append(u)
                 desc = _descripcion_paso(b.get("name"), b.get("input"))
                 if desc and on_paso is not None:
                     try:
@@ -97,7 +124,7 @@ def _procesar_stream(lineas, on_paso=None):
         elif tipo == "result":
             texto = ev.get("result")
             tokens = _tokens_de_usage(ev.get("usage"))
-    return texto, tokens, (texto is not None)
+    return texto, tokens, (texto is not None), urls
 
 
 def _parsear_estado(out):
@@ -119,12 +146,13 @@ def _parsear_estado(out):
         "fecha_evento": date.fromisoformat(fe) if fe else None,
         "url_fuente": data.get("url_fuente"),
         "resumen": data.get("resumen"),
+        "cita": data.get("cita"),
     }
 
 
 def _sin_estado(tokens, estado_consulta):
     return {"estado": None, "fecha_evento": None, "url_fuente": None, "resumen": None,
-            "tokens_total": tokens, "estado_consulta": estado_consulta}
+            "cita": None, "tokens_total": tokens, "estado_consulta": estado_consulta}
 
 
 def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=None,
@@ -134,7 +162,8 @@ def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=N
     Emite los pasos web vía on_paso({"descripcion": ...}), mide tokens y se
     autolimita con un timeout (default env OBSOLESCENCIA_TIMEOUT_SEG=90; al saltar
     mata el proceso). Devuelve SIEMPRE un dict con estado (str|None), fecha_evento,
-    url_fuente, resumen, tokens_total y estado_consulta ∈ ok|sin_respuesta|timeout|error.
+    url_fuente, resumen, cita, tokens_total y estado_consulta ∈ ok|no_encontrado|timeout|error.
+    Un hallazgo solo es "ok" si trae cita literal y la url_fuente fue abierta (WebFetch).
     _popen/_timer_factory son inyectables para test."""
     if timeout is None:
         timeout = int(os.environ.get("OBSOLESCENCIA_TIMEOUT_SEG", "90"))
@@ -169,7 +198,7 @@ def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=N
     timer = _timer_factory(timeout, _matar)
     timer.start()
     try:
-        texto, tokens, _ = _procesar_stream(proc.stdout, on_paso)
+        texto, tokens, _, urls_visitadas = _procesar_stream(proc.stdout, on_paso)
     except Exception:
         timer.cancel()
         try:
@@ -187,11 +216,12 @@ def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=N
     if expirado["v"]:
         return _sin_estado(tokens, "timeout")
     hallazgo = _parsear_estado(texto)
-    if hallazgo:
+    if (hallazgo and hallazgo.get("cita")
+            and _url_verificada(hallazgo.get("url_fuente"), urls_visitadas)):
         hallazgo["tokens_total"] = tokens
         hallazgo["estado_consulta"] = "ok"
         return hallazgo
-    return _sin_estado(tokens, "sin_respuesta")
+    return _sin_estado(tokens, "no_encontrado")
 
 
 def ejecutar(db, hoy, *, limite=20, consultar=consultar_fabricante,
@@ -200,11 +230,12 @@ def ejecutar(db, hoy, *, limite=20, consultar=consultar_fabricante,
     for p in prods:
         url = _url_fabricante(db, p)
         v = consultar(p, url)
-        if not v or not v.get("estado"):
-            continue
-        obsolescencia_service.registrar_hallazgo(
-            db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
-            url=v.get("url_fuente"), resumen=v.get("resumen"))
+        if v and v.get("estado"):
+            obsolescencia_service.registrar_hallazgo(
+                db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
+                url=v.get("url_fuente"), resumen=v.get("resumen"), cita=v.get("cita"))
+        elif (v or {}).get("estado_consulta") == "no_encontrado":
+            obsolescencia_service.marcar_revisado(db, p.id, hoy)
     return obsolescencia_service.enviar_informe(db, hoy, notificar_fn=notificar_fn)
 
 
@@ -222,7 +253,7 @@ def main() -> int:
                     obsolescencia_service.registrar_hallazgo(
                         db, p.id, v["estado"], hoy=date.today(),
                         fecha_evento=v.get("fecha_evento"), url=v.get("url_fuente"),
-                        resumen=v.get("resumen"))
+                        resumen=v.get("resumen"), cita=v.get("cita"))
             info = obsolescencia_service.construir_informe(db, date.today())
             print(f"[dry-run] cambios pendientes de notificar: {info['total']}")
             return 0

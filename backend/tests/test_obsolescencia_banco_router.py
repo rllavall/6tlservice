@@ -138,7 +138,7 @@ def test_refrescar_iniciar_y_progreso(client, db_session, memory_engine, monkeyp
 def test_refrescar_iniciar_equipo_inexistente_404(client):
     app.dependency_overrides[get_consultar_fabricante] = lambda: (
         lambda p, url, *, on_paso=None: {"estado": None, "tokens_total": 0,
-                                         "estado_consulta": "sin_respuesta"})
+                                         "estado_consulta": "no_encontrado"})
     try:
         r = client.post("/api/equipos/9999/obsolescencia/refrescar/iniciar")
         assert r.status_code == 404

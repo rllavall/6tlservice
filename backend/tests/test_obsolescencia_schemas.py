@@ -37,3 +37,12 @@ def test_producto_a_revisar_out():
 def test_resumen_out():
     r = schemas.ObsolescenciaResumenOut(conteos={"activo": 2}, sin_verificar=5, noticias=[])
     assert r.sin_verificar == 5
+
+
+def test_refresco_resultado_item_acepta_cita():
+    from app.schemas import RefrescoResultadoItem
+    it = RefrescoResultadoItem(part_number="P", descripcion="d", cambio=False,
+                               cita="EOL literal", estado_consulta="ok")
+    assert it.cita == "EOL literal"
+    it2 = RefrescoResultadoItem(part_number="P", descripcion="d", cambio=False)
+    assert it2.cita is None

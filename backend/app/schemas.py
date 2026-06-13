@@ -926,6 +926,7 @@ class ObsolescenciaBancoComponenteOut(BaseModel):
     ciclo_vida_fecha: Optional[date] = None
     ciclo_vida_url: Optional[str] = None
     ciclo_vida_resumen: Optional[str] = None
+    ciclo_vida_cita: Optional[str] = None
     ciclo_vida_verificado_en: Optional[date] = None
 
 
@@ -963,6 +964,7 @@ class RefrescoResultadoItem(BaseModel):
     estado_nuevo: Optional[str] = None
     cambio: bool
     tokens: int = 0
+    cita: Optional[str] = None
     estado_consulta: str = "ok"
 
 

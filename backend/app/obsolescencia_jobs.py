@@ -69,6 +69,7 @@ def _hacer_callback(job_id: str):
                     "estado_nuevo": ev["estado_nuevo"],
                     "cambio": ev["cambio"],
                     "tokens": ev.get("tokens", 0),
+                    "cita": ev.get("cita"),
                     "estado_consulta": ev.get("estado_consulta", "ok"),
                 })
                 job["tokens_total"] += ev.get("tokens", 0)
