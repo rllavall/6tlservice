@@ -177,3 +177,14 @@ def test_refrescar_banco_propaga_cita_y_marca_revisado_si_no_encontrado(db_sessi
     r_obs = next(e for e in ev if e["tipo"] == "resultado" and e["producto"].part_number == "P-OBS")
     assert r_obs["estado_consulta"] == "no_encontrado"
     assert r_obs["cita"] is None
+
+
+def test_informe_banco_incluye_origen_y_producto_id(db_session):
+    eq_id = _seed_banco(db_session)
+    p_obs = db_session.query(models.Producto).filter_by(part_number="P-OBS").one()
+    p_obs.ciclo_vida_origen = "manual"
+    db_session.commit()
+    inf = obsolescencia_banco.informe_banco(db_session, eq_id, date(2026, 6, 13))
+    fila = next(f for f in inf["componentes"] if f["part_number"] == "P-OBS")
+    assert fila["ciclo_vida_origen"] == "manual"
+    assert fila["producto_id"] == p_obs.id

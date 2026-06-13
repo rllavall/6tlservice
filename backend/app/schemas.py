@@ -923,6 +923,7 @@ class ObsolescenciaBancoCabecera(BaseModel):
 
 class ObsolescenciaBancoComponenteOut(BaseModel):
     componente_id: int
+    producto_id: int
     posicion: Optional[str] = None
     part_number: str
     fabricante: Optional[str] = None
@@ -936,6 +937,7 @@ class ObsolescenciaBancoComponenteOut(BaseModel):
     ciclo_vida_url: Optional[str] = None
     ciclo_vida_resumen: Optional[str] = None
     ciclo_vida_cita: Optional[str] = None
+    ciclo_vida_origen: Optional[str] = None
     ciclo_vida_verificado_en: Optional[date] = None
 
 
