@@ -124,7 +124,7 @@ def refrescar_banco(db: Session, equipo_id: int, hoy: date, *,
     `{"tipo":"actual","indice","total","producto"}` antes de consultar cada
     producto; `{"tipo":"paso","indice","total","producto","descripcion"}` por
     cada paso reemitido por el agente; y `{"tipo":"resultado","indice","total",
-    "producto","estado_anterior","estado_nuevo","cambio","tokens",
+    "producto","estado_anterior","estado_nuevo","cambio","tokens","cita",
     "estado_consulta"}` después de registrar."""
     prods = productos_de_equipo(db, equipo_id)[:limite]
     total = len(prods)
