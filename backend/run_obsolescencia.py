@@ -146,12 +146,13 @@ def _parsear_estado(out):
         "fecha_evento": date.fromisoformat(fe) if fe else None,
         "url_fuente": data.get("url_fuente"),
         "resumen": data.get("resumen"),
+        "cita": data.get("cita"),
     }
 
 
 def _sin_estado(tokens, estado_consulta):
     return {"estado": None, "fecha_evento": None, "url_fuente": None, "resumen": None,
-            "tokens_total": tokens, "estado_consulta": estado_consulta}
+            "cita": None, "tokens_total": tokens, "estado_consulta": estado_consulta}
 
 
 def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=None,
@@ -214,11 +215,12 @@ def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=N
     if expirado["v"]:
         return _sin_estado(tokens, "timeout")
     hallazgo = _parsear_estado(texto)
-    if hallazgo:
+    if (hallazgo and hallazgo.get("cita")
+            and _url_verificada(hallazgo.get("url_fuente"), urls_visitadas)):
         hallazgo["tokens_total"] = tokens
         hallazgo["estado_consulta"] = "ok"
         return hallazgo
-    return _sin_estado(tokens, "sin_respuesta")
+    return _sin_estado(tokens, "no_encontrado")
 
 
 def ejecutar(db, hoy, *, limite=20, consultar=consultar_fabricante,

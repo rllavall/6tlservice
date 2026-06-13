@@ -91,10 +91,11 @@ class _TimerNulo:
         pass
 
 
-def test_consultar_fabricante_ok_devuelve_estado_y_tokens():
+def test_consultar_fabricante_ok_exige_cita_y_url_verificada():
     lineas = [
-        _linea_assistant("WebSearch", {"query": "BET-1 EOL"}),
-        _linea_result('{"estado":"nrnd","fecha_evento":null,"url_fuente":"http://b","resumen":"r"}',
+        _linea_assistant("WebFetch", {"url": "http://beta/eol"}),
+        _linea_result('{"estado":"nrnd","fecha_evento":null,"url_fuente":"http://beta/eol",'
+                      '"resumen":"r","cita":"NRND as of 2025"}',
                       {"input_tokens": 1000, "output_tokens": 50}),
     ]
     pasos = []
@@ -102,15 +103,17 @@ def test_consultar_fabricante_ok_devuelve_estado_y_tokens():
                                 _popen=lambda: _FakeProc(lineas), _timer_factory=_TimerNulo)
     assert v["estado"] == "nrnd"
     assert v["estado_consulta"] == "ok"
+    assert v["cita"] == "NRND as of 2025"
     assert v["tokens_total"] == 1050
-    assert pasos == ["🔎 Buscando: «BET-1 EOL»"]
+    assert pasos == ["🌐 Leyendo beta"]
 
 
-def test_consultar_fabricante_sin_estado_es_sin_respuesta():
+def test_consultar_fabricante_sin_estado_es_no_encontrado():
     lineas = [_linea_result("no encontré nada concluyente", {"input_tokens": 500, "output_tokens": 10})]
     v = ro.consultar_fabricante(_Producto(), None, _popen=lambda: _FakeProc(lineas), _timer_factory=_TimerNulo)
     assert v["estado"] is None
-    assert v["estado_consulta"] == "sin_respuesta"
+    assert v["estado_consulta"] == "no_encontrado"
+    assert v["cita"] is None
     assert v["tokens_total"] == 510
 
 
@@ -134,3 +137,26 @@ def test_url_verificada_compara_contra_visitadas():
     assert ro._url_verificada("https://mouser.com/otra", visitadas) is False
     assert ro._url_verificada(None, visitadas) is False
     assert ro._url_verificada("https://ti.com/x", []) is False
+
+
+def test_consultar_fabricante_estado_sin_cita_es_no_encontrado():
+    lineas = [
+        _linea_assistant("WebFetch", {"url": "http://beta/eol"}),
+        _linea_result('{"estado":"obsoleto","url_fuente":"http://beta/eol","cita":null}',
+                      {"input_tokens": 200, "output_tokens": 5}),
+    ]
+    v = ro.consultar_fabricante(_Producto(), None, _popen=lambda: _FakeProc(lineas), _timer_factory=_TimerNulo)
+    assert v["estado"] is None
+    assert v["estado_consulta"] == "no_encontrado"
+
+
+def test_consultar_fabricante_url_no_visitada_es_no_encontrado():
+    # cita y estado presentes, pero la url_fuente NO fue abierta (WebFetch) -> sospechosa
+    lineas = [
+        _linea_assistant("WebSearch", {"query": "BET-1 EOL"}),
+        _linea_result('{"estado":"obsoleto","url_fuente":"http://inventada/eol","cita":"EOL 2025"}',
+                      {"input_tokens": 200, "output_tokens": 5}),
+    ]
+    v = ro.consultar_fabricante(_Producto(), None, _popen=lambda: _FakeProc(lineas), _timer_factory=_TimerNulo)
+    assert v["estado"] is None
+    assert v["estado_consulta"] == "no_encontrado"
