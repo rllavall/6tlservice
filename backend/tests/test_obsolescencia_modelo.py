@@ -57,3 +57,16 @@ def test_producto_y_noticia_persisten_cita(db_session):
         cita="Discontinued per PCN-001", notificado=False)
     db_session.add(n); db_session.commit(); db_session.refresh(n)
     assert n.cita == "Discontinued per PCN-001"
+
+
+def test_producto_y_noticia_persisten_origen(db_session):
+    p = models.Producto(part_number="X-ORIG", tipo="componente", descripcion="Demo",
+                         fabricante="Keysight", pn_fabricante="KS-1")
+    p.ciclo_vida_origen = "manual"
+    db_session.add(p); db_session.commit(); db_session.refresh(p)
+    assert p.ciclo_vida_origen == "manual"
+    n = models.NoticiaObsolescencia(
+        producto_id=p.id, fecha_deteccion=date(2026, 6, 13),
+        estado_anterior="activo", estado_nuevo="obsoleto", origen="manual", notificado=False)
+    db_session.add(n); db_session.commit(); db_session.refresh(n)
+    assert n.origen == "manual"

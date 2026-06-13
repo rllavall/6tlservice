@@ -155,3 +155,22 @@ def test_migracion_anade_cita_obsolescencia(tmp_path):
     assert "ciclo_vida_cita" in prod_cols
     assert "cita" in not_cols
     eng.dispose()
+
+
+def test_migracion_anade_origen_ciclo_vida(tmp_path):
+    from sqlalchemy import create_engine, text
+    from app.migrations import add_missing_columns
+
+    db = tmp_path / "old3.db"
+    eng = create_engine(f"sqlite+pysqlite:///{db}")
+    with eng.begin() as conn:
+        conn.exec_driver_sql("CREATE TABLE productos (id INTEGER PRIMARY KEY, part_number TEXT)")
+        conn.exec_driver_sql(
+            "CREATE TABLE noticias_obsolescencia (id INTEGER PRIMARY KEY, producto_id INTEGER)")
+    add_missing_columns(eng)
+    with eng.connect() as conn:
+        prod_cols = {r[1] for r in conn.execute(text("PRAGMA table_info(productos)"))}
+        not_cols = {r[1] for r in conn.execute(text("PRAGMA table_info(noticias_obsolescencia)"))}
+    assert "ciclo_vida_origen" in prod_cols
+    assert "origen" in not_cols
+    eng.dispose()
