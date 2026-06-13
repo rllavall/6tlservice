@@ -162,7 +162,8 @@ def consultar_fabricante(producto, url_obsolescencia, *, on_paso=None, timeout=N
     Emite los pasos web vía on_paso({"descripcion": ...}), mide tokens y se
     autolimita con un timeout (default env OBSOLESCENCIA_TIMEOUT_SEG=90; al saltar
     mata el proceso). Devuelve SIEMPRE un dict con estado (str|None), fecha_evento,
-    url_fuente, resumen, tokens_total y estado_consulta ∈ ok|sin_respuesta|timeout|error.
+    url_fuente, resumen, cita, tokens_total y estado_consulta ∈ ok|no_encontrado|timeout|error.
+    Un hallazgo solo es "ok" si trae cita literal y la url_fuente fue abierta (WebFetch).
     _popen/_timer_factory son inyectables para test."""
     if timeout is None:
         timeout = int(os.environ.get("OBSOLESCENCIA_TIMEOUT_SEG", "90"))
