@@ -27,10 +27,11 @@ def test_descripcion_paso_websearch_y_webfetch():
     assert ro._descripcion_paso("ToolSearch", {"query": "select:WebSearch"}) is None
 
 
-def test_tokens_de_usage_suma_los_cuatro_campos():
+def test_tokens_de_usage_solo_input_output_excluye_cache():
     u = {"input_tokens": 10, "output_tokens": 5,
          "cache_creation_input_tokens": 2, "cache_read_input_tokens": 100}
-    assert ro._tokens_de_usage(u) == 117
+    # se excluye la caché (cache_creation/cache_read): solo input + output
+    assert ro._tokens_de_usage(u) == 15
     assert ro._tokens_de_usage({}) == 0
 
 
@@ -48,7 +49,7 @@ def test_procesar_stream_emite_pasos_y_saca_tokens_y_texto():
     pasos = []
     texto, tokens, hubo = ro._procesar_stream(iter(lineas), on_paso=lambda ev: pasos.append(ev["descripcion"]))
     assert hubo is True
-    assert tokens == 24100
+    assert tokens == 4100  # input+output (4000+100); excluye cache_read (20000)
     assert "obsoleto" in texto
     assert pasos == ["🔎 Buscando: «MAX3232 lifecycle»", "🌐 Leyendo www.ti.com"]
 

@@ -63,11 +63,11 @@ def _descripcion_paso(name, inp):
 
 
 def _tokens_de_usage(usage):
-    """Suma los tokens del bloque usage (input+output+cache); 0 si falta."""
+    """Tokens del bloque usage = input + output (EXCLUYE caché: cache_creation y
+    cache_read no se cuentan, para reflejar el consumo real de la consulta sin el
+    arrastre fijo del system prompt cacheado); 0 si falta."""
     u = usage or {}
-    return sum(int(u.get(k, 0) or 0) for k in (
-        "input_tokens", "output_tokens",
-        "cache_creation_input_tokens", "cache_read_input_tokens"))
+    return sum(int(u.get(k, 0) or 0) for k in ("input_tokens", "output_tokens"))
 
 
 def _procesar_stream(lineas, on_paso=None):
