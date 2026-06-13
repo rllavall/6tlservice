@@ -200,7 +200,7 @@ def ejecutar(db, hoy, *, limite=20, consultar=consultar_fabricante,
     for p in prods:
         url = _url_fabricante(db, p)
         v = consultar(p, url)
-        if not v:
+        if not v or not v.get("estado"):
             continue
         obsolescencia_service.registrar_hallazgo(
             db, p.id, v["estado"], hoy=hoy, fecha_evento=v.get("fecha_evento"),
@@ -218,7 +218,7 @@ def main() -> int:
             prods = obsolescencia_service.productos_a_revisar(db, date.today(), limite=limite)
             for p in prods:
                 v = consultar_fabricante(p, _url_fabricante(db, p))
-                if v:
+                if v and v.get("estado"):
                     obsolescencia_service.registrar_hallazgo(
                         db, p.id, v["estado"], hoy=date.today(),
                         fecha_evento=v.get("fecha_evento"), url=v.get("url_fuente"),
