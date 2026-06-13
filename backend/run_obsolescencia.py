@@ -62,6 +62,27 @@ def _descripcion_paso(name, inp):
     return None
 
 
+def _normalizar_url(u):
+    """host+path en minúsculas, sin esquema, sin 'www.', sin barra final ni query."""
+    if not u:
+        return ""
+    p = urlparse(u if "//" in u else "//" + u)
+    host = (p.netloc or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    path = (p.path or "").rstrip("/").lower()
+    return host + path
+
+
+def _url_verificada(url_fuente, urls_visitadas):
+    """True si url_fuente coincide (host+path normalizado) con alguna URL que el
+    agente abrió de verdad (WebFetch). Prueba de que la fuente no es inventada."""
+    objetivo = _normalizar_url(url_fuente)
+    if not objetivo:
+        return False
+    return any(_normalizar_url(u) == objetivo for u in urls_visitadas)
+
+
 def _tokens_de_usage(usage):
     """Tokens del bloque usage = input + output (EXCLUYE caché: cache_creation y
     cache_read no se cuentan, para reflejar el consumo real de la consulta sin el

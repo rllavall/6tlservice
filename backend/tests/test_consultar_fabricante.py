@@ -119,3 +119,17 @@ def test_consultar_fabricante_timeout_marca_timeout_y_mata_proceso():
     assert v["estado_consulta"] == "timeout"
     assert v["estado"] is None
     assert proc.killed is True
+
+
+def test_normalizar_url_quita_esquema_www_barra_y_query():
+    assert ro._normalizar_url("https://www.TI.com/product/MAX3232/") == "ti.com/product/max3232"
+    assert ro._normalizar_url("http://ti.com/product/MAX3232?x=1") == "ti.com/product/max3232"
+    assert ro._normalizar_url(None) == ""
+
+
+def test_url_verificada_compara_contra_visitadas():
+    visitadas = ["https://www.ti.com/product/MAX3232", "https://digikey.com/x"]
+    assert ro._url_verificada("http://ti.com/product/max3232/", visitadas) is True
+    assert ro._url_verificada("https://mouser.com/otra", visitadas) is False
+    assert ro._url_verificada(None, visitadas) is False
+    assert ro._url_verificada("https://ti.com/x", []) is False
