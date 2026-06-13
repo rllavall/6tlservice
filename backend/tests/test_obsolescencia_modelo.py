@@ -43,3 +43,17 @@ def test_noticia_obsolescencia_persiste(db_session):
     assert n.id is not None
     assert n.estado_nuevo == "obsoleto"
     assert n.notificado is False
+
+
+def test_producto_y_noticia_persisten_cita(db_session):
+    p = models.Producto(part_number="X-CITA", tipo="componente", descripcion="Demo",
+                         fabricante="Acme", pn_fabricante="ACM-1")
+    p.ciclo_vida_cita = "Status: Obsolete (Last Time Buy 2025-12-31)"
+    db_session.add(p); db_session.commit(); db_session.refresh(p)
+    assert p.ciclo_vida_cita.startswith("Status: Obsolete")
+    n = models.NoticiaObsolescencia(
+        producto_id=p.id, fecha_deteccion=date(2026, 6, 13),
+        estado_anterior="activo", estado_nuevo="obsoleto",
+        cita="Discontinued per PCN-001", notificado=False)
+    db_session.add(n); db_session.commit(); db_session.refresh(n)
+    assert n.cita == "Discontinued per PCN-001"
