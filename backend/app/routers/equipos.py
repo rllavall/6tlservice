@@ -7,9 +7,9 @@ from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import models, trazabilidad
+from app import models, trazabilidad, escaneo_service
 from app.db import get_db
-from app.schemas import CambioConfiguracionOut, ClienteOut, ComponenteOut, EquipoAltaCreate, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, IncidenciaOut, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
+from app.schemas import CambioConfiguracionOut, ClienteOut, ComponenteOut, EquipoAltaCreate, EquipoCreate, EquipoFicha, EquipoOut, EquipoUpdate, EscaneoIn, EscaneoResultado, IncidenciaOut, MovimientoOut, ProductoOut, SustituirPayload, SustitucionOut, UbicacionOut
 
 router = APIRouter(prefix="/api/equipos", tags=["equipos"])
 
@@ -181,3 +181,13 @@ def sustituir_componente(equipo_id: int, payload: SustituirPayload, db: Session 
         desmontaje=res["desmontaje"],
         montaje=res["montaje"],
     )
+
+
+@router.post("/{equipo_id}/escaneo", response_model=EscaneoResultado)
+def escaneo(equipo_id: int, payload: EscaneoIn, db: Session = Depends(get_db)) -> dict:
+    """Resuelve un escaneo DataMatrix contra los componentes del banco.
+    Rellena el nº de serie solo en el caso inequívoco; el resto se resuelve a mano."""
+    resultado = escaneo_service.resolver_escaneo(db, equipo_id, payload.raw)
+    if resultado["estado"] == "equipo_no_existe":
+        raise HTTPException(404, "Equipo no encontrado")
+    return resultado
