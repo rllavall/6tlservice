@@ -63,7 +63,10 @@ class UbicacionOut(_ORM):
 
 # --- Producto ---
 _CATEGORIA = Literal["ate", "yav_module", "fastate_module", "test_fixture", "test_handler", "otro"]
-_CATEGORIA_COMPONENTE = Literal["instrumento", "mass_interconnect", "wiring", "accesorios"]
+_CATEGORIA_COMPONENTE = Literal[
+    "instrumento", "mass_interconnect", "wiring", "accesorios", "software", "fixture_adaptador"
+]
+_NIVEL_TRAZABILIDAD = Literal["serie", "version", "no_trazado"]
 _ESTADO_CICLO = Literal["activo", "nrnd", "eol_anunciado", "ultima_compra", "obsoleto"]
 
 
@@ -79,6 +82,9 @@ class ProductoCreate(BaseModel):
     categoria: Optional[_CATEGORIA] = None
     pn_fabricante: Optional[str] = None
     categoria_componente: Optional[_CATEGORIA_COMPONENTE] = None
+    afecta_a_medida: bool = False
+    bajo_coste: bool = False
+    nivel_trazabilidad_override: Optional[_NIVEL_TRAZABILIDAD] = None
 
 
 class ProductoOut(_ORM):
@@ -94,6 +100,11 @@ class ProductoOut(_ORM):
     categoria: Optional[str] = None
     pn_fabricante: Optional[str] = None
     categoria_componente: Optional[str] = None
+    afecta_a_medida: bool = False
+    bajo_coste: bool = False
+    nivel_trazabilidad_override: Optional[str] = None
+    criticidad: Optional[str] = None
+    nivel_trazabilidad: Optional[str] = None
     estado_ciclo_vida: Optional[str] = None
     ciclo_vida_fecha: Optional[date] = None
     ciclo_vida_url: Optional[str] = None
@@ -174,10 +185,11 @@ class EquipoOut(_ORM):
 
 # --- Componente ---
 class ComponenteCreate(BaseModel):
-    numero_serie: str
+    numero_serie: Optional[str] = None
     producto_id: int
     equipo_id: Optional[int] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     fecha_montaje: Optional[date] = None
     notas: Optional[str] = None
 
@@ -185,19 +197,22 @@ class ComponenteCreate(BaseModel):
 class ComponenteUpdate(BaseModel):
     numero_serie: Optional[str] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     notas: Optional[str] = None
 
 
 class ComponenteOut(_ORM):
     id: int
-    numero_serie: str
+    numero_serie: Optional[str] = None
     producto_id: int
     equipo_id: Optional[int] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     fecha_montaje: Optional[date] = None
     notas: Optional[str] = None
     categoria: Optional[str] = None
     categoria_componente: Optional[str] = None
+    nivel_trazabilidad: Optional[str] = None
 
 
 # --- Escaneo DataMatrix ---
@@ -217,7 +232,7 @@ class EscaneoCandidato(_ORM):
     posicion: Optional[str] = None
     part_number: str
     pn_fabricante: Optional[str] = None
-    numero_serie: str
+    numero_serie: Optional[str] = None
 
 
 class EscaneoResultado(BaseModel):
