@@ -55,6 +55,7 @@ def _hacer_callback(job_id: str):
             if ev["tipo"] == "actual":
                 job["indice"] = ev["indice"]
                 job["actual"] = {"part_number": p.part_number,
+                                 "pn_fabricante": p.pn_fabricante,
                                  "fabricante": p.fabricante,
                                  "descripcion": p.descripcion,
                                  "pasos": []}
@@ -64,6 +65,7 @@ def _hacer_callback(job_id: str):
             elif ev["tipo"] == "resultado":
                 job["resultados"].append({
                     "part_number": p.part_number,
+                    "pn_fabricante": p.pn_fabricante,
                     "descripcion": p.descripcion,
                     "estado_anterior": ev["estado_anterior"],
                     "estado_nuevo": ev["estado_nuevo"],

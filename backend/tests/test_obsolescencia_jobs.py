@@ -39,6 +39,7 @@ def test_ejecutar_job_termina_con_progreso_y_report(memory_engine, db_session):
     assert snap["actual"] is None
     assert len(snap["resultados"]) == 1
     assert snap["resultados"][0]["part_number"] == "P-ACT"
+    assert snap["resultados"][0]["pn_fabricante"] == "BET-1"
     assert snap["resultados"][0]["estado_nuevo"] == "obsoleto"
     assert snap["resultados"][0]["cambio"] is True
     assert snap["report"]["resumen"]["total"] == 1
@@ -66,7 +67,7 @@ def test_callback_acumula_pasos_y_tokens():
     cb = obsolescencia_jobs._hacer_callback(job_id)
 
     class _P:
-        part_number = "P1"; fabricante = "Beta"; descripcion = "Cable"
+        part_number = "P1"; pn_fabricante = "MPN-1"; fabricante = "Beta"; descripcion = "Cable"
 
     p = _P()
     cb({"tipo": "actual", "indice": 1, "total": 2, "producto": p})
@@ -74,6 +75,7 @@ def test_callback_acumula_pasos_y_tokens():
     cb({"tipo": "paso", "indice": 1, "total": 2, "producto": p, "descripcion": "🌐 b"})
     snap1 = obsolescencia_jobs.snapshot(job_id)
     assert snap1["actual"]["pasos"] == ["🔎 a", "🌐 b"]
+    assert snap1["actual"]["pn_fabricante"] == "MPN-1"
 
     cb({"tipo": "resultado", "indice": 1, "total": 2, "producto": p,
         "estado_anterior": "activo", "estado_nuevo": "obsoleto", "cambio": True,
