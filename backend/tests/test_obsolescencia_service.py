@@ -141,3 +141,46 @@ def test_marcar_revisado_sella_fecha_sin_tocar_estado(db_session):
     assert p.ciclo_vida_url == "https://prev"     # intacto
     assert p.ciclo_vida_cita == "cita previa"     # intacta
     assert svc.marcar_revisado(db_session, 9999, date(2026, 6, 13)) is False
+
+
+def test_registrar_manual_sin_url_guarda_estado_nota_y_origen(db_session):
+    p = _prod(db_session, "A")
+    r = svc.registrar_manual(db_session, p.id, "obsoleto", hoy=date(2026, 6, 13),
+                             nota="Confirmado EOL por email del fabricante")
+    assert r["registrado"] is True and r["cambio"] is True   # no exige url
+    db_session.refresh(p)
+    assert p.estado_ciclo_vida == "obsoleto"
+    assert p.ciclo_vida_cita == "Confirmado EOL por email del fabricante"
+    assert p.ciclo_vida_origen == "manual"
+    assert p.ciclo_vida_verificado_en == date(2026, 6, 13)
+    n = db_session.query(models.NoticiaObsolescencia).filter_by(producto_id=p.id).one()
+    assert n.origen == "manual" and n.cita == "Confirmado EOL por email del fabricante"
+
+
+def test_registrar_manual_estado_invalido_se_rechaza(db_session):
+    p = _prod(db_session, "A")
+    r = svc.registrar_manual(db_session, p.id, "no_existe", hoy=date(2026, 6, 13))
+    assert r["registrado"] is False and r["motivo"] == "estado_invalido"
+    db_session.refresh(p)
+    assert p.estado_ciclo_vida is None
+
+
+def test_agente_gana_sobreescribe_manual_y_marca_origen_agente(db_session):
+    p = _prod(db_session, "A")
+    svc.registrar_manual(db_session, p.id, "nrnd", hoy=date(2026, 6, 13), nota="manual")
+    svc.registrar_hallazgo(db_session, p.id, "obsoleto", hoy=date(2026, 6, 20),
+                           url="https://x", resumen="EOL", cita="Status: Obsolete")
+    db_session.refresh(p)
+    assert p.estado_ciclo_vida == "obsoleto"
+    assert p.ciclo_vida_origen == "agente"
+    assert p.ciclo_vida_cita == "Status: Obsolete"
+
+
+def test_marcar_revisado_no_pisa_el_manual(db_session):
+    p = _prod(db_session, "A")
+    svc.registrar_manual(db_session, p.id, "obsoleto", hoy=date(2026, 6, 13), nota="manual")
+    svc.marcar_revisado(db_session, p.id, date(2026, 6, 20))
+    db_session.refresh(p)
+    assert p.estado_ciclo_vida == "obsoleto"
+    assert p.ciclo_vida_origen == "manual"
+    assert p.ciclo_vida_verificado_en == date(2026, 6, 20)

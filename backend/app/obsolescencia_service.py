@@ -48,12 +48,47 @@ def registrar_hallazgo(db: Session, producto_id: int, estado: str, *, hoy: date,
     p.ciclo_vida_resumen = resumen
     p.ciclo_vida_cita = cita
     p.ciclo_vida_verificado_en = hoy
+    p.ciclo_vida_origen = "agente"
 
     if notable:
         db.add(models.NoticiaObsolescencia(
             producto_id=p.id, fecha_deteccion=hoy, estado_anterior=anterior,
             estado_nuevo=estado, fecha_evento=fecha_evento, url_fuente=url,
-            resumen=resumen, cita=cita, notificado=False))
+            resumen=resumen, cita=cita, origen="agente", notificado=False))
+    db.commit()
+    return {"registrado": True, "cambio": notable, "motivo": None}
+
+
+def registrar_manual(db: Session, producto_id: int, estado: str, *, hoy: date,
+                     fecha_evento: date | None = None, url: str | None = None,
+                     nota: str | None = None) -> dict:
+    """Fija a mano el estado de ciclo de vida (para webs que bloquean bots). No exige
+    url (a diferencia del agente); guarda `nota` como cita y marca origen='manual'.
+    Crea NoticiaObsolescencia si el cambio es notable."""
+    p = db.get(models.Producto, producto_id)
+    if p is None:
+        return {"registrado": False, "motivo": "no_existe", "cambio": False}
+    if not obsolescencia.estado_valido(estado):
+        return {"registrado": False, "motivo": "estado_invalido", "cambio": False}
+    # Sin bloqueo de url (a diferencia de registrar_hallazgo): el operario puede
+    # confirmar el estado a mano aunque la web bloquee bots y no tenga un enlace limpio.
+
+    anterior = p.estado_ciclo_vida
+    notable = obsolescencia.es_cambio_notable(anterior, estado)
+
+    p.estado_ciclo_vida = estado
+    p.ciclo_vida_fecha = fecha_evento
+    p.ciclo_vida_url = url
+    p.ciclo_vida_resumen = nota
+    p.ciclo_vida_cita = nota
+    p.ciclo_vida_verificado_en = hoy
+    p.ciclo_vida_origen = "manual"
+
+    if notable:
+        db.add(models.NoticiaObsolescencia(
+            producto_id=p.id, fecha_deteccion=hoy, estado_anterior=anterior,
+            estado_nuevo=estado, fecha_evento=fecha_evento, url_fuente=url,
+            resumen=nota, cita=nota, origen="manual", notificado=False))
     db.commit()
     return {"registrado": True, "cambio": notable, "motivo": None}
 

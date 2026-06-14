@@ -46,6 +46,7 @@ def informe_banco(db: Session, equipo_id: int, hoy: date) -> dict:
             verificados.append(p.ciclo_vida_verificado_en)
         filas.append({
             "componente_id": comp.id,
+            "producto_id": p.id,
             "posicion": comp.posicion,
             "part_number": p.part_number,
             "fabricante": p.fabricante,
@@ -59,6 +60,7 @@ def informe_banco(db: Session, equipo_id: int, hoy: date) -> dict:
             "ciclo_vida_url": p.ciclo_vida_url,
             "ciclo_vida_resumen": p.ciclo_vida_resumen,
             "ciclo_vida_cita": p.ciclo_vida_cita,
+            "ciclo_vida_origen": p.ciclo_vida_origen,
             "ciclo_vida_verificado_en": p.ciclo_vida_verificado_en,
         })
 
