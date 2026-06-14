@@ -98,6 +98,17 @@ def alta(payload: EquipoAltaCreate, db: Session = Depends(get_db)) -> models.Equ
     return eq
 
 
+@router.get("/{equipo_id}/configuracion")
+def configuracion(equipo_id: int, db: Session = Depends(get_db)) -> dict:
+    """Configuración real del equipo comparada con la esperada (plantilla del
+    producto-equipo): faltantes/sobrantes + series y revisiones pendientes."""
+    from app import configuracion_comparacion
+    try:
+        return configuracion_comparacion.construir_configuracion(db, equipo_id)
+    except LookupError:
+        raise HTTPException(404, "Equipo no encontrado")
+
+
 @router.put("/{equipo_id}", response_model=EquipoOut)
 def actualizar(equipo_id: int, payload: EquipoUpdate, db: Session = Depends(get_db)) -> models.Equipo:
     eq = db.get(models.Equipo, equipo_id)
