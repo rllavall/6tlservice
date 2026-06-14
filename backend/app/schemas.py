@@ -142,8 +142,9 @@ class EquipoUpdate(BaseModel):
 # --- Alta de equipo (wizard) ---
 class EquipoAltaComponente(BaseModel):
     producto_id: int
-    numero_serie: str
+    numero_serie: Optional[str] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     notas: Optional[str] = None
 
 
@@ -162,6 +163,9 @@ class EquipoAltaCreate(BaseModel):
     movimiento_fecha: Optional[date] = None
     movimiento_notas: Optional[str] = None
     componentes: list[EquipoAltaComponente] = Field(default_factory=list)
+    # Si True, las líneas de componente se generan desde la plantilla del producto-equipo
+    # (según su nivel de trazabilidad) y se ignora `componentes`.
+    desde_plantilla: bool = False
 
 
 class EquipoOut(_ORM):
