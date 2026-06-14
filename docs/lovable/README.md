@@ -80,6 +80,7 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 | 35 | `35_pasos_tokens_obsolescencia.md` | **Pasos en vivo + tokens en el popup de refresco**: traza de lo que hace el agente por componente (🔎 buscando / 🌐 leyendo), tokens por componente + total acumulado en cabecera, y marca de timeout/sin respuesta. Campos nuevos en `RefrescoProgreso`/`RefrescoActual`/`RefrescoResultadoItem`. |
 | 36 | `36_cita_origen_obsolescencia.md` | **Prueba de origen: cita textual + "No encontrado en la web del fabricante"**: `cita` en `RefrescoResultadoItem` y `ciclo_vida_cita` en la tabla del report; nuevo valor `no_encontrado` en `estado_consulta`; blockquote lila + enlace "Ver fuente" en el log del popup. |
 | 37 | `37_entrada_manual_obsolescencia.md` | Entrada manual del estado de ciclo de vida (lápiz por fila + badge Manual) para webs que bloquean bots. |
+| 38 | `38_escaneo_datamatrix.md` | Pantalla `/escaneo`: lector DataMatrix (teclado-wedge) rellena el nº de serie del componente del banco, emparejando por PN de fabricante. |
 
 > **Nota de contrato (fabricantes/garantía/RMA, prompt 28):**
 > - `Fabricante` = `{id, nombre, email_service|null, email_rma|null, url_activacion_garantia|null, requiere_activacion_web, politica_rma|null, notas|null}`. CRUD `/api/fabricantes` (POST 201, GET lista/`{id}`, PUT parcial, DELETE 204; **409** nombre duplicado). `Producto` gana `fabricante_id:number|null` (en `ProductoCreate`/`Out`).
