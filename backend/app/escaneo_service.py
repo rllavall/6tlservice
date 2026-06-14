@@ -103,5 +103,4 @@ def resolver_escaneo(db: Session, equipo_id: int, raw: str) -> dict:
         return base
     db.refresh(comp)
     base["estado"] = "asignado"
-    base["numero_serie"] = comp.numero_serie
     return base

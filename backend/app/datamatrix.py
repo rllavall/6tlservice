@@ -65,7 +65,9 @@ def parsear_gs1(raw: str) -> dict:
 
 
 def parsear_con_regla(raw: str, regla: str) -> dict | None:
-    """Aplica una regex con grupos nombrados pn/sn. None si no compila o no casa."""
+    """Aplica una regex con grupos nombrados pn/sn. None si no compila o no casa.
+    La regla la define un operario autenticado (Fabricante.regla_datamatrix); debe ser
+    un patrón razonable (sin backtracking catastrófico), no entrada de usuario anónimo."""
     try:
         patron = re.compile(regla)
     except re.error:
