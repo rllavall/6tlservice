@@ -200,6 +200,37 @@ class ComponenteOut(_ORM):
     categoria_componente: Optional[str] = None
 
 
+# --- Escaneo DataMatrix ---
+class EscaneoIn(BaseModel):
+    raw: str
+
+    @field_validator("raw")
+    @classmethod
+    def _no_vacio(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("raw no puede estar vacío")
+        return v
+
+
+class EscaneoCandidato(_ORM):
+    componente_id: int
+    posicion: Optional[str] = None
+    part_number: str
+    pn_fabricante: Optional[str] = None
+    numero_serie: str
+
+
+class EscaneoResultado(BaseModel):
+    estado: str
+    formato: Optional[str] = None
+    pn: Optional[str] = None
+    sn: Optional[str] = None
+    componente_id: Optional[int] = None
+    posicion: Optional[str] = None
+    part_number: Optional[str] = None
+    candidatos: list[EscaneoCandidato] = Field(default_factory=list)
+
+
 # --- Movimiento ---
 class MovimientoCreate(BaseModel):
     ubicacion_destino_id: int
@@ -787,6 +818,7 @@ class FabricanteCreate(BaseModel):
     politica_rma: Optional[str] = None
     notas: Optional[str] = None
     url_obsolescencia: Optional[str] = None
+    regla_datamatrix: Optional[str] = None
 
 
 class FabricanteUpdate(BaseModel):
@@ -798,6 +830,7 @@ class FabricanteUpdate(BaseModel):
     politica_rma: Optional[str] = None
     notas: Optional[str] = None
     url_obsolescencia: Optional[str] = None
+    regla_datamatrix: Optional[str] = None
 
 
 class FabricanteOut(BaseModel):
@@ -811,6 +844,7 @@ class FabricanteOut(BaseModel):
     politica_rma: Optional[str] = None
     notas: Optional[str] = None
     url_obsolescencia: Optional[str] = None
+    regla_datamatrix: Optional[str] = None
 
 
 class GarantiaActivarPayload(BaseModel):

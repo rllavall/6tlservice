@@ -335,6 +335,7 @@ class Fabricante(Base):
     politica_rma: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     url_obsolescencia: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    regla_datamatrix: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 class GarantiaFabricante(Base):
