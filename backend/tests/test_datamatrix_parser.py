@@ -26,6 +26,12 @@ def test_gs1_ignora_prefijo_simbologia():
     assert r["pn"] == "07612345678903"
     assert r["sn"] == "SN999"
 
+def test_gs1_ai01_seguido_de_ai21_sin_prefijo():
+    # Formato real más común en electrónica: 01<GTIN14>21<serial>, sin simbología.
+    r = datamatrix.parsear_gs1("010761234567890321SER-ABC123")
+    assert r["pn"] == "07612345678903"
+    assert r["sn"] == "SER-ABC123"
+
 def test_gs1_separador_gs_para_campo_variable():
     raw = "21LOTE-7\x1d240PN-ABC"
     r = datamatrix.parsear_gs1(raw)
