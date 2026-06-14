@@ -59,6 +59,9 @@ app.include_router(equipos.router, dependencies=[Depends(get_current_user)])
 from app.routers import componentes
 app.include_router(componentes.router, dependencies=[Depends(get_current_user)])
 
+from app.routers import plantillas
+app.include_router(plantillas.router, dependencies=[Depends(get_current_user)])
+
 from app.routers import movimientos
 app.include_router(movimientos.router, dependencies=[Depends(get_current_user)])
 

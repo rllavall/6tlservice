@@ -159,6 +159,44 @@ class Componente(Base):
         return self.producto.nivel_trazabilidad if self.producto is not None else None
 
 
+class PlantillaComponente(Base):
+    """Configuración esperada de un producto-equipo: qué componentes lleva ese
+    modelo de ATE. Base del pre-relleno del alta y de la comparación real vs esperada."""
+    __tablename__ = "plantilla_componentes"
+    __table_args__ = (
+        UniqueConstraint("producto_equipo_id", "producto_componente_id", "posicion",
+                         name="uq_plantilla_linea"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    producto_equipo_id: Mapped[int] = mapped_column(ForeignKey("productos.id"))
+    producto_componente_id: Mapped[int] = mapped_column(ForeignKey("productos.id"))
+    posicion: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    cantidad: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+
+    producto_componente: Mapped["Producto"] = relationship(foreign_keys=[producto_componente_id])
+
+    @property
+    def part_number(self):
+        return self.producto_componente.part_number if self.producto_componente else None
+
+    @property
+    def descripcion(self):
+        return self.producto_componente.descripcion if self.producto_componente else None
+
+    @property
+    def categoria_componente(self):
+        return self.producto_componente.categoria_componente if self.producto_componente else None
+
+    @property
+    def criticidad(self):
+        return self.producto_componente.criticidad if self.producto_componente else None
+
+    @property
+    def nivel_trazabilidad(self):
+        return self.producto_componente.nivel_trazabilidad if self.producto_componente else None
+
+
 class Movimiento(Base):
     __tablename__ = "movimientos"
 

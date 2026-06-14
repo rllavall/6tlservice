@@ -215,6 +215,32 @@ class ComponenteOut(_ORM):
     nivel_trazabilidad: Optional[str] = None
 
 
+# --- Plantilla de configuración esperada (producto-equipo) ---
+class PlantillaComponenteCreate(BaseModel):
+    producto_componente_id: int
+    posicion: Optional[str] = None
+    cantidad: int = 1
+
+
+class PlantillaComponenteUpdate(BaseModel):
+    posicion: Optional[str] = None
+    cantidad: Optional[int] = None
+
+
+class PlantillaComponenteOut(_ORM):
+    id: int
+    producto_equipo_id: int
+    producto_componente_id: int
+    posicion: Optional[str] = None
+    cantidad: int
+    # datos del producto componente (display + nivel derivado)
+    part_number: Optional[str] = None
+    descripcion: Optional[str] = None
+    categoria_componente: Optional[str] = None
+    criticidad: Optional[str] = None
+    nivel_trazabilidad: Optional[str] = None
+
+
 # --- Escaneo DataMatrix ---
 class EscaneoIn(BaseModel):
     raw: str
