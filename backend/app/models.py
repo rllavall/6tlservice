@@ -65,6 +65,9 @@ class Producto(Base):
     pn_fabricante: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     fabricante_id: Mapped[Optional[int]] = mapped_column(ForeignKey("fabricantes.id"), nullable=True)
     categoria_componente: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    afecta_a_medida: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    bajo_coste: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    nivel_trazabilidad_override: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     estado_ciclo_vida: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     ciclo_vida_fecha: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     ciclo_vida_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -72,6 +75,16 @@ class Producto(Base):
     ciclo_vida_verificado_en: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     ciclo_vida_cita: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     ciclo_vida_origen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    @property
+    def criticidad(self) -> str:
+        from app import criticidad
+        return criticidad.criticidad(self)
+
+    @property
+    def nivel_trazabilidad(self) -> str:
+        from app import criticidad
+        return criticidad.nivel_trazabilidad(self)
 
 
 class Equipo(Base):
@@ -122,10 +135,11 @@ class Componente(Base):
     __table_args__ = (UniqueConstraint("producto_id", "numero_serie", name="uq_componente_serie"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    numero_serie: Mapped[str] = mapped_column(String)
+    numero_serie: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     producto_id: Mapped[int] = mapped_column(ForeignKey("productos.id"))
     equipo_id: Mapped[Optional[int]] = mapped_column(ForeignKey("equipos.id"), nullable=True)
     posicion: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    revision: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     fecha_montaje: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     notas: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
@@ -139,6 +153,48 @@ class Componente(Base):
     @property
     def categoria_componente(self):
         return self.producto.categoria_componente if self.producto is not None else None
+
+    @property
+    def nivel_trazabilidad(self):
+        return self.producto.nivel_trazabilidad if self.producto is not None else None
+
+
+class PlantillaComponente(Base):
+    """Configuración esperada de un producto-equipo: qué componentes lleva ese
+    modelo de ATE. Base del pre-relleno del alta y de la comparación real vs esperada."""
+    __tablename__ = "plantilla_componentes"
+    __table_args__ = (
+        UniqueConstraint("producto_equipo_id", "producto_componente_id", "posicion",
+                         name="uq_plantilla_linea"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    producto_equipo_id: Mapped[int] = mapped_column(ForeignKey("productos.id"))
+    producto_componente_id: Mapped[int] = mapped_column(ForeignKey("productos.id"))
+    posicion: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    cantidad: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+
+    producto_componente: Mapped["Producto"] = relationship(foreign_keys=[producto_componente_id])
+
+    @property
+    def part_number(self):
+        return self.producto_componente.part_number if self.producto_componente else None
+
+    @property
+    def descripcion(self):
+        return self.producto_componente.descripcion if self.producto_componente else None
+
+    @property
+    def categoria_componente(self):
+        return self.producto_componente.categoria_componente if self.producto_componente else None
+
+    @property
+    def criticidad(self):
+        return self.producto_componente.criticidad if self.producto_componente else None
+
+    @property
+    def nivel_trazabilidad(self):
+        return self.producto_componente.nivel_trazabilidad if self.producto_componente else None
 
 
 class Movimiento(Base):

@@ -5,8 +5,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app import models, trazabilidad
-from app.schemas import EquipoAltaCreate
+from app import models, plantilla, trazabilidad
+from app.schemas import EquipoAltaComponente, EquipoAltaCreate
 
 
 class AltaError(Exception):
@@ -38,10 +38,38 @@ def _serie_componente_existe(db: Session, producto_id: int, numero_serie: str) -
     )
 
 
+def _componentes_desde_plantilla(db: Session, producto_equipo_id: int) -> list[EquipoAltaComponente]:
+    """Genera las líneas de componente a partir de la plantilla del producto-equipo,
+    según el nivel de trazabilidad de cada producto componente:
+      - serie       -> placeholder de serie (escaneable), único por línea,
+      - version     -> sin serie (revisión pendiente),
+      - no_trazado  -> sin serie.
+    Expande `cantidad` en tantas líneas como unidades."""
+    lineas: list[EquipoAltaComponente] = []
+    i = 0
+    for pl in plantilla.listar(db, producto_equipo_id):
+        nivel = pl.nivel_trazabilidad
+        for _ in range(max(1, pl.cantidad or 1)):
+            i += 1
+            if nivel == "serie":
+                sufijo = f"{pl.posicion} " if pl.posicion else ""
+                serie = f"S/N pendiente {sufijo}#{i}".replace("  ", " ")
+            else:  # version / no_trazado
+                serie = None
+            lineas.append(EquipoAltaComponente(
+                producto_id=pl.producto_componente_id,
+                numero_serie=serie, posicion=pl.posicion))
+    return lineas
+
+
 def alta_equipo_completa(db: Session, payload: EquipoAltaCreate) -> models.Equipo:
     """Crea equipo + (opcional) movimiento de entrega + (opcional) componentes
     montados, todo con `flush` (sin commit). El llamador (router) hace el commit
-    o el rollback. Lanza AltaError ante cualquier validación fallida."""
+    o el rollback. Lanza AltaError ante cualquier validación fallida.
+
+    Si `payload.desde_plantilla`, las líneas de componente se generan desde la
+    plantilla del producto-equipo (según nivel de trazabilidad) y se ignora
+    `payload.componentes`."""
 
     # --- validar producto del equipo ---
     prod = db.get(models.Producto, payload.producto_id)
@@ -71,18 +99,27 @@ def alta_equipo_completa(db: Session, payload: EquipoAltaCreate) -> models.Equip
         ):
             raise AltaError(409, "location", "La ubicación pertenece a otro cliente")
 
+    # --- línea efectiva de componentes (de la plantilla o del payload) ---
+    componentes = (
+        _componentes_desde_plantilla(db, payload.producto_id)
+        if payload.desde_plantilla else payload.componentes
+    )
+
     # --- validar componentes (producto + serie, incl. duplicados en el propio payload) ---
+    # Las líneas sin nº de serie (version / no_trazado) no entran en el chequeo de
+    # unicidad: pueden repetirse legítimamente (varios cables iguales, p. ej.).
     vistos: set[tuple[int, str]] = set()
-    for i, c in enumerate(payload.componentes):
+    for i, c in enumerate(componentes):
         cp = db.get(models.Producto, c.producto_id)
         if cp is None:
             raise AltaError(404, "component", "Producto del componente no encontrado", index=i)
         if cp.tipo != "componente":
             raise AltaError(409, "component", "El producto no es de tipo 'componente'", index=i)
-        clave = (c.producto_id, c.numero_serie)
-        if clave in vistos or _serie_componente_existe(db, c.producto_id, c.numero_serie):
-            raise AltaError(409, "component", "Número de serie de componente duplicado", index=i)
-        vistos.add(clave)
+        if c.numero_serie:
+            clave = (c.producto_id, c.numero_serie)
+            if clave in vistos or _serie_componente_existe(db, c.producto_id, c.numero_serie):
+                raise AltaError(409, "component", "Número de serie de componente duplicado", index=i)
+            vistos.add(clave)
 
     # --- crear equipo (con prefill de garantía, como POST /api/equipos) ---
     meses = payload.meses_garantia
@@ -113,8 +150,9 @@ def alta_equipo_completa(db: Session, payload: EquipoAltaCreate) -> models.Equip
         )
 
     # --- componentes iniciales ---
-    for c in payload.componentes:
-        comp = models.Componente(producto_id=c.producto_id, numero_serie=c.numero_serie, notas=c.notas)
+    for c in componentes:
+        comp = models.Componente(producto_id=c.producto_id, numero_serie=c.numero_serie,
+                                 revision=c.revision, notas=c.notas)
         db.add(comp)
         db.flush()  # asigna comp.id
         trazabilidad.montar_componente(db, comp.id, eq.id, c.posicion, fecha_mov, "entrega_inicial")

@@ -63,7 +63,10 @@ class UbicacionOut(_ORM):
 
 # --- Producto ---
 _CATEGORIA = Literal["ate", "yav_module", "fastate_module", "test_fixture", "test_handler", "otro"]
-_CATEGORIA_COMPONENTE = Literal["instrumento", "mass_interconnect", "wiring", "accesorios"]
+_CATEGORIA_COMPONENTE = Literal[
+    "instrumento", "mass_interconnect", "wiring", "accesorios", "software", "fixture_adaptador"
+]
+_NIVEL_TRAZABILIDAD = Literal["serie", "version", "no_trazado"]
 _ESTADO_CICLO = Literal["activo", "nrnd", "eol_anunciado", "ultima_compra", "obsoleto"]
 
 
@@ -79,6 +82,9 @@ class ProductoCreate(BaseModel):
     categoria: Optional[_CATEGORIA] = None
     pn_fabricante: Optional[str] = None
     categoria_componente: Optional[_CATEGORIA_COMPONENTE] = None
+    afecta_a_medida: bool = False
+    bajo_coste: bool = False
+    nivel_trazabilidad_override: Optional[_NIVEL_TRAZABILIDAD] = None
 
 
 class ProductoOut(_ORM):
@@ -94,6 +100,11 @@ class ProductoOut(_ORM):
     categoria: Optional[str] = None
     pn_fabricante: Optional[str] = None
     categoria_componente: Optional[str] = None
+    afecta_a_medida: bool = False
+    bajo_coste: bool = False
+    nivel_trazabilidad_override: Optional[str] = None
+    criticidad: Optional[str] = None
+    nivel_trazabilidad: Optional[str] = None
     estado_ciclo_vida: Optional[str] = None
     ciclo_vida_fecha: Optional[date] = None
     ciclo_vida_url: Optional[str] = None
@@ -131,8 +142,9 @@ class EquipoUpdate(BaseModel):
 # --- Alta de equipo (wizard) ---
 class EquipoAltaComponente(BaseModel):
     producto_id: int
-    numero_serie: str
+    numero_serie: Optional[str] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     notas: Optional[str] = None
 
 
@@ -151,6 +163,9 @@ class EquipoAltaCreate(BaseModel):
     movimiento_fecha: Optional[date] = None
     movimiento_notas: Optional[str] = None
     componentes: list[EquipoAltaComponente] = Field(default_factory=list)
+    # Si True, las líneas de componente se generan desde la plantilla del producto-equipo
+    # (según su nivel de trazabilidad) y se ignora `componentes`.
+    desde_plantilla: bool = False
 
 
 class EquipoOut(_ORM):
@@ -174,10 +189,11 @@ class EquipoOut(_ORM):
 
 # --- Componente ---
 class ComponenteCreate(BaseModel):
-    numero_serie: str
+    numero_serie: Optional[str] = None
     producto_id: int
     equipo_id: Optional[int] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     fecha_montaje: Optional[date] = None
     notas: Optional[str] = None
 
@@ -185,19 +201,48 @@ class ComponenteCreate(BaseModel):
 class ComponenteUpdate(BaseModel):
     numero_serie: Optional[str] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     notas: Optional[str] = None
 
 
 class ComponenteOut(_ORM):
     id: int
-    numero_serie: str
+    numero_serie: Optional[str] = None
     producto_id: int
     equipo_id: Optional[int] = None
     posicion: Optional[str] = None
+    revision: Optional[str] = None
     fecha_montaje: Optional[date] = None
     notas: Optional[str] = None
     categoria: Optional[str] = None
     categoria_componente: Optional[str] = None
+    nivel_trazabilidad: Optional[str] = None
+
+
+# --- Plantilla de configuración esperada (producto-equipo) ---
+class PlantillaComponenteCreate(BaseModel):
+    producto_componente_id: int
+    posicion: Optional[str] = None
+    cantidad: int = 1
+
+
+class PlantillaComponenteUpdate(BaseModel):
+    posicion: Optional[str] = None
+    cantidad: Optional[int] = None
+
+
+class PlantillaComponenteOut(_ORM):
+    id: int
+    producto_equipo_id: int
+    producto_componente_id: int
+    posicion: Optional[str] = None
+    cantidad: int
+    # datos del producto componente (display + nivel derivado)
+    part_number: Optional[str] = None
+    descripcion: Optional[str] = None
+    categoria_componente: Optional[str] = None
+    criticidad: Optional[str] = None
+    nivel_trazabilidad: Optional[str] = None
 
 
 # --- Escaneo DataMatrix ---
@@ -217,7 +262,7 @@ class EscaneoCandidato(_ORM):
     posicion: Optional[str] = None
     part_number: str
     pn_fabricante: Optional[str] = None
-    numero_serie: str
+    numero_serie: Optional[str] = None
 
 
 class EscaneoResultado(BaseModel):
