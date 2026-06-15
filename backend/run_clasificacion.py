@@ -13,6 +13,14 @@ Uso (desde backend/):
 from __future__ import annotations
 
 import argparse
+import sys
+
+# La consola Windows (cp1252) no codifica homoglifos u otros caracteres que el
+# LLM puede colar en el motivo; no abortar el resumen por un print.
+try:
+    sys.stdout.reconfigure(errors="replace")
+except (AttributeError, ValueError):
+    pass
 
 from app.env_file import load_env_file
 
