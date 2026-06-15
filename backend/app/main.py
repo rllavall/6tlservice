@@ -119,6 +119,9 @@ app.include_router(garantia_fabricante.router, dependencies=[Depends(get_current
 from app.routers import derivaciones
 app.include_router(derivaciones.router, dependencies=[Depends(get_current_user)])
 
+from app.routers import clasificacion
+app.include_router(clasificacion.router, dependencies=[Depends(get_current_user)])
+
 from app.routers import auth
 app.include_router(auth.router)
 

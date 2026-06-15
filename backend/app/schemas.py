@@ -112,6 +112,8 @@ class ProductoOut(_ORM):
     ciclo_vida_verificado_en: Optional[date] = None
     ciclo_vida_cita: Optional[str] = None
     ciclo_vida_origen: Optional[str] = None
+    clasificacion_origen: Optional[str] = None
+    clasificacion_motivo: Optional[str] = None
 
 
 # --- Equipo ---
