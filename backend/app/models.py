@@ -75,6 +75,8 @@ class Producto(Base):
     ciclo_vida_verificado_en: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     ciclo_vida_cita: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     ciclo_vida_origen: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    clasificacion_origen: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    clasificacion_motivo: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     @property
     def criticidad(self) -> str:
