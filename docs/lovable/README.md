@@ -82,6 +82,7 @@ Pega estos prompts después de los del sub-proyecto 1 (requieren el shell y el c
 | 37 | `37_entrada_manual_obsolescencia.md` | Entrada manual del estado de ciclo de vida (lápiz por fila + badge Manual) para webs que bloquean bots. |
 | 38 | `38_escaneo_datamatrix.md` | Pantalla `/escaneo`: lector DataMatrix (teclado-wedge) rellena el nº de serie del componente del banco, emparejando por PN de fabricante. |
 | 39 | `39_criticidad_trazabilidad.md` | **Criticidad → nivel de trazabilidad (componentes)**: flags `afecta_a_medida`/`bajo_coste` + categorías `software`/`fixture_adaptador` + override en `/catalogo`, badges derivados `criticidad`/`nivel_trazabilidad`, editor de plantilla (config esperada) por producto-equipo, alta desde plantilla y panel config real-vs-esperada (`GET /api/equipos/{id}/configuracion`) en la ficha de equipo. |
+| 40 | `40_auto_clasificacion_trazabilidad.md` | **Auto-clasificación de trazabilidad**: badge Auto/Manual + tooltip de motivo (`clasificacion_origen`/`clasificacion_motivo`); los flags se auto-rellenan por el backend, editarlos pasa a Manual; no reenviar los flags en el PUT si no se tocan; botón opcional "volver a automático". |
 
 > **Nota de contrato (fabricantes/garantía/RMA, prompt 28):**
 > - `Fabricante` = `{id, nombre, email_service|null, email_rma|null, url_activacion_garantia|null, requiere_activacion_web, politica_rma|null, notas|null}`. CRUD `/api/fabricantes` (POST 201, GET lista/`{id}`, PUT parcial, DELETE 204; **409** nombre duplicado). `Producto` gana `fabricante_id:number|null` (en `ProductoCreate`/`Out`).
