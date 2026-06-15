@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import models, obsolescencia_service
+from app.clasificacion_service import clasificar_producto
 from app.db import get_db
 from app.schemas import CicloVidaManualIn, ProductoCreate, ProductoOut
 
@@ -49,6 +50,20 @@ def fijar_ciclo_vida_manual(producto_id: int, payload: CicloVidaManualIn,
     return p
 
 
+_FLAGS_MANUALES = {"afecta_a_medida", "bajo_coste", "nivel_trazabilidad_override"}
+
+
+def _aplicar_clasificacion(db, p, payload):
+    """Si el body trae flags explicitos -> manual; si no, reglas (solo componentes)."""
+    if p.tipo != "componente":
+        return
+    if _FLAGS_MANUALES & payload.model_fields_set:
+        p.clasificacion_origen = "manual"
+        db.commit()
+    else:
+        clasificar_producto(db, p, usar_llm=False)
+
+
 @router.post("", response_model=ProductoOut, status_code=201)
 def crear(payload: ProductoCreate, db: Session = Depends(get_db)) -> models.Producto:
     p = models.Producto(**payload.model_dump())
@@ -58,6 +73,8 @@ def crear(payload: ProductoCreate, db: Session = Depends(get_db)) -> models.Prod
     except IntegrityError:
         db.rollback()
         raise HTTPException(409, "part_number ya existe")
+    db.refresh(p)
+    _aplicar_clasificacion(db, p, payload)
     db.refresh(p)
     return p
 
@@ -74,6 +91,8 @@ def actualizar(producto_id: int, payload: ProductoCreate, db: Session = Depends(
     except IntegrityError:
         db.rollback()
         raise HTTPException(409, "part_number ya existe")
+    db.refresh(p)
+    _aplicar_clasificacion(db, p, payload)
     db.refresh(p)
     return p
 
