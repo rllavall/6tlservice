@@ -84,7 +84,13 @@ def actualizar(producto_id: int, payload: ProductoCreate, db: Session = Depends(
     p = db.get(models.Producto, producto_id)
     if p is None:
         raise HTTPException(404, "Producto no encontrado")
-    for k, v in payload.model_dump().items():
+    datos = payload.model_dump()
+    # No pisar los flags de trazabilidad con sus defaults si el PUT no los reenvia:
+    # se gestionan via clasificacion (manual o reglas), no via los defaults del schema.
+    if p.tipo == "componente" and not (_FLAGS_MANUALES & payload.model_fields_set):
+        for f in _FLAGS_MANUALES:
+            datos.pop(f, None)
+    for k, v in datos.items():
         setattr(p, k, v)
     try:
         db.commit()
